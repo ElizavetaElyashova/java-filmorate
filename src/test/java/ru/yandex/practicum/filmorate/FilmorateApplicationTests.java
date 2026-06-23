@@ -83,7 +83,7 @@ class FilmorateApplicationTests {
 
     @Test
     void postUsers_whenInvalidLogin() throws IOException, InterruptedException {
-        basicUser.setLogin("qwa qwe");
+        basicUser.setLogin("qwaqwe\n");
         String user = gson.toJson(basicUser);
         HttpRequest req = HttpRequest.newBuilder()
                 .uri(URI.create(BASE + "/users"))
@@ -152,7 +152,7 @@ class FilmorateApplicationTests {
         basicFilm.setName("");
         String film = gson.toJson(basicFilm);
         HttpRequest req = HttpRequest.newBuilder()
-                .uri(URI.create(BASE + "/users"))
+                .uri(URI.create(BASE + "/films"))
                 .setHeader("Content-Type", "application/json; charset=UTF-8")
                 .POST(HttpRequest.BodyPublishers.ofString(film))
                 .build();

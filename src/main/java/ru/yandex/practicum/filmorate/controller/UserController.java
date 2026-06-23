@@ -1,7 +1,6 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
@@ -14,7 +13,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/users")
 @Slf4j
-@Data
 public class UserController {
     private final Map<Long, User> users = new HashMap<>();
 
@@ -38,7 +36,7 @@ public class UserController {
     public User update(@RequestBody @Valid User newUser) throws NotFoundException {
         if (users.containsKey(newUser.getId())) {
             log.debug("Изменение пользователя {} на пользователя {}", users.get(newUser.getId()), newUser);
-            if (newUser.getName() == null || newUser.getName().isBlank() || newUser.getName().isEmpty()) {
+            if (newUser.getName() == null || newUser.getName().isBlank()) {
                 newUser.setName(newUser.getLogin());
             }
             users.put(newUser.getId(), newUser);

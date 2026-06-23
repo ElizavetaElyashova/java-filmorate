@@ -16,7 +16,6 @@ import java.util.Map;
 public class FilmController {
     private final Map<Long, Film> films = new HashMap<>();
 
-
     @GetMapping
     public Collection<Film> findAll() {
         return films.values();
