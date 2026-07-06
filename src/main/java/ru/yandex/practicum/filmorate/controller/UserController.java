@@ -2,57 +2,63 @@ package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 @RestController
 @RequestMapping("/users")
 @Slf4j
 public class UserController {
-    private final Map<Long, User> users = new HashMap<>();
+    private final UserService userService;
+
+    @Autowired
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
 
     @GetMapping
     public Collection<User> findAll() {
-        return users.values();
+        return userService.getUserStorage().findAll();
+    }
+
+    @GetMapping("/{id}")
+    public User findById(@PathVariable Long id) {
+        return userService.getUserStorage().findById(id);
+    }
+
+    @GetMapping("/{id}/friends")
+    public List<User> findFriends(@PathVariable Long id) {
+        return userService.getUserStorage().findFriends(id);
+    }
+
+    @GetMapping("/{id}/friends/common/{otherId}")
+    public List<User> findCommonFriends(@PathVariable Long id, @PathVariable Long otherId) {
+        return userService.findCommonFriends(id, otherId);
     }
 
     @PostMapping
     public User create(@RequestBody @Valid User user) {
-        user.setId(getNextId());
-        if (user.getName() == null || user.getName().isEmpty() || user.getName().isBlank()) {
-            user.setName(user.getLogin());
-        }
-        users.put(user.getId(), user);
-        log.debug("Добавлен пользователь: {}", user);
-        return user;
+        return userService.getUserStorage().create(user);
     }
 
     @PutMapping
     public User update(@RequestBody @Valid User newUser) throws NotFoundException {
-        if (users.containsKey(newUser.getId())) {
-            log.debug("Изменение пользователя {} на пользователя {}", users.get(newUser.getId()), newUser);
-            if (newUser.getName() == null || newUser.getName().isBlank()) {
-                newUser.setName(newUser.getLogin());
-            }
-            users.put(newUser.getId(), newUser);
-            return newUser;
-        }
-        log.warn("Пользователь с id = {}  не найден", newUser.getId());
-        throw new NotFoundException("Пользователь с id = " + newUser.getId() + " не найден");
+        return userService.getUserStorage().update(newUser);
     }
 
-    private long getNextId() {
-        long currentMaxId = users.keySet()
-                .stream()
-                .mapToLong(id -> id)
-                .max()
-                .orElse(0);
-        return ++currentMaxId;
+    @PutMapping("/{id}/friends/{friendId}")
+    public void addFriend(@PathVariable Long id, @PathVariable Long friendId) {
+        userService.addFriend(id, friendId);
     }
 
+    @DeleteMapping("/{id}/friends/{friendId}")
+    public void deleteFriend(@PathVariable Long id, @PathVariable Long friendId) {
+        userService.deleteFriend(id, friendId);
+    }
 }
