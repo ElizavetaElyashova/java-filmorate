@@ -14,4 +14,6 @@ public interface FilmStorage {
     Film create(@RequestBody @Valid Film film);
 
     Film update(@RequestBody @Valid Film newFilm);
+
+    void remove(Long id);
 }

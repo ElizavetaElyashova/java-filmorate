@@ -51,6 +51,12 @@ public class InMemoryFilmStorage implements FilmStorage {
         throw new NotFoundException("Фильм с id = " + newFilm.getId() + " не найден");
     }
 
+    public void remove(Long id) {
+        if (findById(id) != null) {
+            films.remove(id);
+        }
+    }
+
     private long getNextId() {
         long currentMaxId = films.keySet()
                 .stream()

@@ -62,6 +62,11 @@ public class InMemoryUserStorage implements UserStorage {
                 .toList();
     }
 
+    public void remove(Long id) {
+        if (findById(id) != null) {
+            users.remove(id);
+        }
+    }
 
     private long getNextId() {
         long currentMaxId = users.keySet()
