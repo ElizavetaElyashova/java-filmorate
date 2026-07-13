@@ -9,6 +9,7 @@ import lombok.EqualsAndHashCode;
 import ru.yandex.practicum.filmorate.validation.DateNotBefore;
 
 import java.time.LocalDate;
+import java.util.Set;
 
 @Data
 @EqualsAndHashCode
@@ -23,4 +24,6 @@ public class Film {
     private LocalDate releaseDate;
     @Positive
     private int duration;
+    private int likes;
+    private Set<Long> usersLikedIds;
 }
