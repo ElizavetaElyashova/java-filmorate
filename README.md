@@ -1,5 +1,5 @@
 # java-filmorate
-Ссылка на схему базы данных: https://github.com/ElizavetaElyashova/java-filmorate/blob/add-database/Filmorate.png
+Ссылка на схему базы данных: https://github.com/ElizavetaElyashova/java-filmorate/blob/2d56bf95fcb1e94689b3774b11e51a156e87f241/Filmorate.png 
 
 ### Описание схемы:
 * Основные таблицы *users* и *films* содержат записи о пользователях и фильмах, соответственно. Первичным ключом в обеих таблицах является поле *id*.
