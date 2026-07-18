@@ -3,6 +3,7 @@
 
 ### Описание схемы:
 * Основные таблицы *users* и *films* содержат записи о пользователях и фильмах, соответственно. Первичным ключом в обеих таблицах является поле *id*.
+* Таблица *ratings* содержит названия рейтингов фильмов, первичный ключ - поле *id*. Поле *rating_id* таблицы *films* является внешним ключом к таблице *ratings* и полю *id*.
 * Таблица *genres* содержит названия жанров фильмов, первичный ключ - поле *id*. 
 * Таблица *film_genres* связывает (many-to-many) фильмы с жанрами, поле *film_id* является <u>внешним</u> ключом к таблице *films* и полю *id*, поле *genre_id* является <u>внешним</u> ключом к таблице *genres* и полю *id*.
 * Таблица *likes* связывает (many-to-many) фильмы с пользователями, поставившими лайк. Поле *film_id* является <u>внешним</u> ключом к таблице *films* и полю *id*, поле *user_id* является <u>внешним</u> ключом к таблице *users* и полю *id*.
@@ -10,12 +11,39 @@
 
 ### Запросы:
 * #### Найти пользователя по id:</br>
-  SELECT * FROM users WHERE id = *target_id*;
+  ```sql
+  SELECT *
+  FROM users
+  WHERE id = *target_id*;
 * #### Найти фильм по id:</br>
-  SELECT * FROM users WHERE id = *target_id*;
+  ```sql
+  SELECT f.id, f.name, f.description, f.release_date. f.duration, f.likes, r.name
+  FROM films AS f
+  JOIN ratings AS r ON f.rating_id = r.id
+  WHERE f.id = *target_id*;
+  ```
 * #### Вывести пользователей, поставивших лайк фильму:</br>
-  SELECT * FROM users WHERE id IN (SELECT user_id FROM likes WHERE film_id = *target_id*);
+  ```sql
+  SELECT *
+  FROM users
+  WHERE id IN
+    (SELECT user_id
+    FROM likes
+    WHERE film_id = *target_id*);
+  ```
 * #### Вывести жанры фильма:</br>
-  SELECT name FROM genres WHERE id IN (SELECT genre_id FROM film_genre WHERE film_id = *target_id*);
+  ```sql
+  SELECT name
+  FROM genres
+  WHERE id IN
+    (SELECT genre_id
+    FROM film_genre
+    WHERE film_id = *target_id*);
 * #### Вывести всех друзей пользователя:</br>
-  SELECT * FROM users WHERE user_id IN (SELECT friend_id FROM friends WHERE user_id = *target_id*);
+  ```sql
+  SELECT *
+  FROM users
+  WHERE user_id IN
+    (SELECT friend_id
+    FROM friends
+    WHERE user_id = *target_id*);
