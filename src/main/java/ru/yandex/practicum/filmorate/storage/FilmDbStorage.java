@@ -38,33 +38,33 @@ public class FilmDbStorage implements FilmStorage {
         this.userDbStorage = userDbStorage;
     }
 
-    private String FIND_BY_ID_QUERY = "SELECT f.id, f.name, f.description, f.release_date, f.duration, f.likes, f.rating_id, r.name AS mpa " +
+    private String findByIdQuery = "SELECT f.id, f.name, f.description, f.release_date, f.duration, f.likes, f.rating_id, r.name AS mpa " +
             "FROM films AS f JOIN ratings AS r ON f.rating_id = r.id WHERE f.id = ?;";
-    private String FIND_USERS_LIKED = "SELECT user_id FROM likes WHERE film_id = ?;";
-    private String UPDATE_LIKES = "UPDATE films SET likes = likes + ? WHERE id = ?";
-    private String ADD_USER_LIKED = "INSERT INTO likes VALUES(?, ?)";
-    private String DELETE_USER_LIKED = "DELETE FROM likes WHERE film_id = ? AND user_id = ?";
-    private String FIND_ALL_QUERY = "SELECT f.id, f.name, f.description, f.release_date, f.duration, f.likes, f.rating_id, r.name AS mpa " +
+    private String findUsersLiked = "SELECT user_id FROM likes WHERE film_id = ?;";
+    private String updateLikes = "UPDATE films SET likes = likes + ? WHERE id = ?";
+    private String addUserLiked = "INSERT INTO likes VALUES(?, ?)";
+    private String deleteUserLiked = "DELETE FROM likes WHERE film_id = ? AND user_id = ?";
+    private String findAllQuery = "SELECT f.id, f.name, f.description, f.release_date, f.duration, f.likes, f.rating_id, r.name AS mpa " +
             "FROM films f JOIN ratings r ON f.rating_id = r.id";
-    private String INSERT_FILM_QUERY = "INSERT INTO films(name, description, release_date, duration, likes, rating_id) " +
+    private String insertFilmQuery = "INSERT INTO films(name, description, release_date, duration, likes, rating_id) " +
             "VALUES(?, ?, ?, ?, ?, ?);";
-    private String UPDATE_FILM_QUERY = "UPDATE films SET name = ?, description = ?, release_date = ?, duration = ? WHERE id = ?";
-    private String DELETE_FILM_QUERY = "DELETE FROM likes WHERE film_id = ?;\n" +
+    private String updateFilmQuery = "UPDATE films SET name = ?, description = ?, release_date = ?, duration = ? WHERE id = ?";
+    private String deleteFilmQuery = "DELETE FROM likes WHERE film_id = ?;\n" +
             "DELETE FROM film_genre WHERE film_id = ?;\n" +
             "DELETE FROM films WHERE ID = ?;";
 
 
     @Override
     public Collection<Film> findAll() {
-        return jdbc.query(FIND_ALL_QUERY, filmMapper);
+        return jdbc.query(findAllQuery, filmMapper);
     }
 
     @Override
     public Film findById(Long id) {
         try {
-            Film film = jdbc.queryForObject(FIND_BY_ID_QUERY, filmMapper, id);
+            Film film = jdbc.queryForObject(findByIdQuery, filmMapper, id);
             List<Genre> genres = genreDbStorage.findFilmGenres(id);
-            Set<Long> userLikedIds = new HashSet<>(jdbc.queryForList(FIND_USERS_LIKED, Long.class, id));
+            Set<Long> userLikedIds = new HashSet<>(jdbc.queryForList(findUsersLiked, Long.class, id));
             film.setGenres(genres);
             film.setUsersLikedIds(userLikedIds);
             log.trace("Фильм с id = {} найден", id);
@@ -80,7 +80,7 @@ public class FilmDbStorage implements FilmStorage {
         GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
         film.setMpa(mpaDbStorage.findById(film.getMpa().getId()));
         jdbc.update(con -> {
-            PreparedStatement ps = con.prepareStatement(INSERT_FILM_QUERY, Statement.RETURN_GENERATED_KEYS);
+            PreparedStatement ps = con.prepareStatement(insertFilmQuery, Statement.RETURN_GENERATED_KEYS);
             ps.setObject(1, film.getName());
             ps.setObject(2, film.getDescription());
             ps.setObject(3, film.getReleaseDate());
@@ -120,7 +120,7 @@ public class FilmDbStorage implements FilmStorage {
         if (newFilm.getDuration() == null) {
             newFilm.setDuration(oldFilm.getDuration());
         }
-        jdbc.update(UPDATE_FILM_QUERY, newFilm.getName(), newFilm.getDescription(), newFilm.getReleaseDate(),
+        jdbc.update(updateFilmQuery, newFilm.getName(), newFilm.getDescription(), newFilm.getReleaseDate(),
                 newFilm.getDuration(), newFilm.getId());
         newFilm.setLikes(oldFilm.getLikes());
         newFilm.setUsersLikedIds(oldFilm.getUsersLikedIds());
@@ -133,7 +133,7 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public void remove(Long id) {
         findById(id);
-        jdbc.update(DELETE_FILM_QUERY, id, id, id);
+        jdbc.update(deleteFilmQuery, id, id, id);
         log.debug("Фильм с id = {} удален", id);
     }
 
@@ -144,8 +144,8 @@ public class FilmDbStorage implements FilmStorage {
         if (film.getUsersLikedIds().contains(userId)) {
             log.info("Пользователь с id = {} уже поставил лайк фильму с id = {}", userId, filmId);
         } else {
-            jdbc.update(UPDATE_LIKES, 1, filmId);
-            jdbc.update(ADD_USER_LIKED, filmId, userId);
+            jdbc.update(updateLikes, 1, filmId);
+            jdbc.update(addUserLiked, filmId, userId);
         }
     }
 
@@ -154,8 +154,8 @@ public class FilmDbStorage implements FilmStorage {
         userDbStorage.findById(userId);
         Film film = findById(filmId);
         if (film.getUsersLikedIds().contains(userId)) {
-            jdbc.update(UPDATE_LIKES, -1, filmId);
-            jdbc.update(DELETE_USER_LIKED, filmId, userId);
+            jdbc.update(updateLikes, -1, filmId);
+            jdbc.update(deleteUserLiked, filmId, userId);
         } else {
             log.info("Пользователь с id = {} уже удалил лайк у фильма с id = {}", userId, filmId);
         }

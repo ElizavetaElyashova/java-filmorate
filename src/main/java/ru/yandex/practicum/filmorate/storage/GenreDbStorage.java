@@ -22,18 +22,18 @@ public class GenreDbStorage {
     @Autowired
     private GenreRowMapper mapper;
 
-    private String FIND_ALL_QUERY = "SELECT * FROM genres;";
-    private String FIND_BY_ID_QUERY = "SELECT * FROM genres WHERE id = ?;";
-    private String FIND_FILM_GENRES = "SELECT * FROM genres WHERE id IN (SELECT genre_id FROM film_genre WHERE film_id = ?);";
-    private String INSERT_FILM_GENRES = "INSERT INTO film_genre(film_id, genre_id) VALUES(?, ?);";
+    private String findAllQuery = "SELECT * FROM genres;";
+    private String findByIdQuery = "SELECT * FROM genres WHERE id = ?;";
+    private String findFilmGenres = "SELECT * FROM genres WHERE id IN (SELECT genre_id FROM film_genre WHERE film_id = ?);";
+    private String insertFilmGenres = "INSERT INTO film_genre(film_id, genre_id) VALUES(?, ?);";
 
     public Collection<Genre> findAll() {
-        return jdbc.query(FIND_ALL_QUERY, mapper).stream().sorted(Comparator.comparingInt(Genre::getId)).toList();
+        return jdbc.query(findAllQuery, mapper).stream().sorted(Comparator.comparingInt(Genre::getId)).toList();
     }
 
     public Genre findById(Integer id) {
         try {
-            return jdbc.queryForObject(FIND_BY_ID_QUERY, mapper, id);
+            return jdbc.queryForObject(findByIdQuery, mapper, id);
         } catch (DataAccessException e) {
             log.warn("Жанр с id = {} не найден.", id);
             throw new NotFoundException("Жанр с id = " + id + " не найден.");
@@ -41,13 +41,13 @@ public class GenreDbStorage {
     }
 
     public List<Genre> findFilmGenres(long id) {
-        return jdbc.query(FIND_FILM_GENRES, mapper, id);
+        return jdbc.query(findFilmGenres, mapper, id);
     }
 
     private void insertFilmGenre(long filmId, int genreId) {
         GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
         jdbc.update(con -> {
-            PreparedStatement ps = con.prepareStatement(INSERT_FILM_GENRES, Statement.RETURN_GENERATED_KEYS);
+            PreparedStatement ps = con.prepareStatement(insertFilmGenres, Statement.RETURN_GENERATED_KEYS);
             ps.setObject(1, filmId);
             ps.setObject(2, genreId);
             return ps;

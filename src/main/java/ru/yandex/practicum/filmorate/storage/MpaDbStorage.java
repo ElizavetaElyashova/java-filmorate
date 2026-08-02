@@ -19,16 +19,16 @@ public class MpaDbStorage {
     @Autowired
     private MpaRowMapper mapper;
 
-    private String FIND_ALL_QUERY = "SELECT * FROM ratings;";
-    private static String FIND_BY_ID_QUERY = "SELECT * FROM ratings WHERE id = ?;";
+    private String findAllQuery = "SELECT * FROM ratings;";
+    private static String findByIdQuery = "SELECT * FROM ratings WHERE id = ?;";
 
     public Collection<Mpa> findAll() {
-        return jdbc.query(FIND_ALL_QUERY, mapper);
+        return jdbc.query(findAllQuery, mapper);
     }
 
     public Mpa findById(Integer id) {
         try {
-            return jdbc.queryForObject(FIND_BY_ID_QUERY, mapper, id);
+            return jdbc.queryForObject(findByIdQuery, mapper, id);
         } catch (DataAccessException e) {
             log.warn("Рейтинг с id = {} не найден.", id);
             throw new NotFoundException("Рейтинг с id = " + id + " не найден.");

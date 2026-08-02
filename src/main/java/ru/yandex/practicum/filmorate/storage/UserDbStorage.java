@@ -27,23 +27,23 @@ public class UserDbStorage implements UserStorage {
     @Autowired
     private UserRowMapper mapper;
 
-    private String FIND_ALL_QUERY = "SELECT * FROM users;";
-    private String FIND_BY_ID_QUERY = "SELECT * FROM users WHERE id = ?;";
-    private String INSERT_USER_QUERY = "INSERT INTO users(email, login, name, birthday) VALUES(?, ?, ?, ?);";
-    private String DELETE_USER_QUERY = "DELETE FROM friends WHERE user_id = ? OR friend_id = ?;\n" +
+    private String findAllQuery = "SELECT * FROM users;";
+    private String findByIdQuery = "SELECT * FROM users WHERE id = ?;";
+    private String insertUserQuery = "INSERT INTO users(email, login, name, birthday) VALUES(?, ?, ?, ?);";
+    private String deleteUserQuery = "DELETE FROM friends WHERE user_id = ? OR friend_id = ?;\n" +
             "DELETE FROM likes WHERE user_id = ?;\n" +
             "DELETE FROM users WHERE id = ?;";
-    private String UPDATE_USER_QUERY = "UPDATE users SET email = ?, login = ?, name = ?, birthday = ?" +
+    private String updateUserQuery = "UPDATE users SET email = ?, login = ?, name = ?, birthday = ?" +
             "WHERE id = ?";
-    private String FIND_FRIENDS_QUERY = "SELECT * FROM users WHERE id IN " +
+    private String findFriendsQuery = "SELECT * FROM users WHERE id IN " +
             "(SELECT friend_id FROM friends WHERE user_id = ?);";
-    private String ADD_FRIEND_QUERY = "INSERT INTO friends(user_id, friend_id) VALUES(?, ?);";
-    private String DELETE_FRIEND_QUERY = "DELETE FROM friends WHERE user_id = ? AND friend_id = ?;";
+    private String addFriendQuery = "INSERT INTO friends(user_id, friend_id) VALUES(?, ?);";
+    private String deleteFriendQuery = "DELETE FROM friends WHERE user_id = ? AND friend_id = ?;";
 
 
     @Override
     public Collection<User> findAll() {
-        return jdbc.query(FIND_ALL_QUERY, mapper);
+        return jdbc.query(findAllQuery, mapper);
     }
 
     @Override
@@ -53,7 +53,7 @@ public class UserDbStorage implements UserStorage {
             user.setName(user.getLogin());
         }
         jdbc.update(con -> {
-            PreparedStatement ps = con.prepareStatement(INSERT_USER_QUERY, Statement.RETURN_GENERATED_KEYS);
+            PreparedStatement ps = con.prepareStatement(insertUserQuery, Statement.RETURN_GENERATED_KEYS);
             ps.setObject(1, user.getEmail());
             ps.setObject(2, user.getLogin());
             ps.setObject(3, user.getName());
@@ -82,7 +82,7 @@ public class UserDbStorage implements UserStorage {
         if (newUser.getName() == null || newUser.getName().isBlank()) {
             newUser.setName(newUser.getLogin());
         }
-        jdbc.update(UPDATE_USER_QUERY, newUser.getEmail(), newUser.getLogin(),
+        jdbc.update(updateUserQuery, newUser.getEmail(), newUser.getLogin(),
                 newUser.getName(), newUser.getBirthday(), newUser.getId());
         log.debug("Изменение пользователя {} на пользователя {}", oldUser, newUser);
         return newUser;
@@ -91,9 +91,9 @@ public class UserDbStorage implements UserStorage {
     @Override
     public User findById(Long id) {
         try {
-            User user = jdbc.queryForObject(FIND_BY_ID_QUERY, mapper, id);
+            User user = jdbc.queryForObject(findByIdQuery, mapper, id);
             Set<Long> friends = new HashSet<>(
-                    jdbc.query(FIND_FRIENDS_QUERY, mapper, id).stream()
+                    jdbc.query(findFriendsQuery, mapper, id).stream()
                             .map(User::getId)
                             .toList());
             user.setFriendsIds(friends);
@@ -109,13 +109,13 @@ public class UserDbStorage implements UserStorage {
     public List<User> findFriends(Long id) {
         findById(id);
         log.trace("Возвращает друзей пользователя с id = {}.", id);
-        return jdbc.query(FIND_FRIENDS_QUERY, mapper, id);
+        return jdbc.query(findFriendsQuery, mapper, id);
     }
 
     @Override
     public void remove(Long id) {
         findById(id);
-        jdbc.update(DELETE_USER_QUERY, id, id, id, id);
+        jdbc.update(deleteUserQuery, id, id, id, id);
         log.info("Пользователь с id = {} был удален.", id);
     }
 
@@ -123,13 +123,13 @@ public class UserDbStorage implements UserStorage {
     public void addFriend(Long id, Long friendId) {
         findById(id);
         findById(friendId);
-        jdbc.update(ADD_FRIEND_QUERY, id, friendId);
+        jdbc.update(addFriendQuery, id, friendId);
     }
 
     @Override
     public void deleteFriend(Long id, Long friendId) {
         findById(id);
         findById(friendId);
-        jdbc.update(DELETE_FRIEND_QUERY, id, friendId);
+        jdbc.update(deleteFriendQuery, id, friendId);
     }
 }
