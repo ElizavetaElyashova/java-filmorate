@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.io.IOException;
@@ -134,6 +135,9 @@ class FilmorateApplicationTests {
 
     @Test
     void postFilms_whenValidFilm() throws IOException, InterruptedException {
+        Mpa mpa = new Mpa();
+        mpa.setId(1);
+        basicFilm.setMpa(mpa);
         String film = gson.toJson(basicFilm);
         HttpRequest req = HttpRequest.newBuilder()
                 .uri(URI.create(BASE + "/films"))

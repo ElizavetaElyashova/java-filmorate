@@ -17,7 +17,7 @@
   WHERE id = *target_id*;
 * #### Найти фильм по id:</br>
   ```sql
-  SELECT f.id, f.name, f.description, f.release_date. f.duration, f.likes, r.name
+  SELECT f.id, f.name, f.description, f.release_date, f.duration, f.likes, r.name
   FROM films AS f
   JOIN ratings AS r ON f.rating_id = r.id
   WHERE f.id = *target_id*;
