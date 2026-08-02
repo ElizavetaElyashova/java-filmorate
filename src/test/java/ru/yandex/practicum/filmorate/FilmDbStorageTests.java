@@ -67,8 +67,8 @@ public class FilmDbStorageTests {
     @Test
     @Order(1)
     public void testFilmCreate() {
-        long id = filmDbStorage.create(film1).getId();
-        assertThat(id).isEqualTo(1);
+        film1 = filmDbStorage.create(film1);
+        assertThat(filmDbStorage.findAll()).contains(film1);
     }
 
     @Test

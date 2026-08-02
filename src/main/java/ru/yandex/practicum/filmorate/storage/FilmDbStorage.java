@@ -93,12 +93,12 @@ public class FilmDbStorage implements FilmStorage {
         film.setId(keyHolder.getKeyAs(Long.class));
 
         if (film.getGenres() != null) {
-            Set<Integer> genres_ids = new HashSet<>(
+            Set<Integer> genresIds = new HashSet<>(
                     film.getGenres().stream()
                             .map(Genre::getId)
                             .toList());
             film.setGenres(
-                    genreDbStorage.insertFilmGenres(film.getId(), genres_ids));
+                    genreDbStorage.insertFilmGenres(film.getId(), genresIds));
 
         }
         log.debug("Фильм {} добавлен", film);
