@@ -57,9 +57,9 @@ public class GenreDbStorage {
 
     public List<Genre> insertFilmGenres(long filmId, Set<Integer> genresIds) {
         List<Genre> genres = new ArrayList<>();
-        for (Integer genre_id : genresIds) {
-            genres.add(findById(genre_id));
-            insertFilmGenre(filmId, genre_id);
+        for (Integer genreId : genresIds) {
+            genres.add(findById(genreId));
+            insertFilmGenre(filmId, genreId);
         }
         return genres;
     }
