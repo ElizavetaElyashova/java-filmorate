@@ -104,4 +104,4 @@ class UserDbStorageTests {
         assertThat(userStorage.findFriends(user1.getId())).contains(user2);
     }
 
-} 
+}
