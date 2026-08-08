@@ -73,7 +73,6 @@ public class FilmService {
     }
 
     public Film create(Film film) {
-        filmStorage.findById(film.getId());
         if (film.getGenres() != null) {
             Set<Integer> genresIds = new HashSet<>(
                     film.getGenres().stream()
@@ -82,11 +81,13 @@ public class FilmService {
             for (int id : genresIds) {
                 genreDbStorage.findById(id);
             }
+            film = filmStorage.create(film);
             film.setGenres(
                     genreDbStorage.insertFilmGenres(film.getId(), genresIds));
 
+        } else {
+            film = filmStorage.create(film);
         }
-        film = filmStorage.create(film);
         log.debug("Фильм {} добавлен", film);
         return film;
     }
