@@ -34,4 +34,6 @@ public class MpaDbStorage {
             throw new NotFoundException("Рейтинг с id = " + id + " не найден.");
         }
     }
+
+
 }

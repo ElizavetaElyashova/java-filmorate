@@ -41,14 +41,11 @@ public class FilmDbStorage implements FilmStorage {
     private String findByIdQuery = "SELECT f.id, f.name, f.description, f.release_date, f.duration, f.likes, f.rating_id, r.name AS mpa " +
             "FROM films AS f JOIN ratings AS r ON f.rating_id = r.id WHERE f.id = ?;";
     private String findUsersLiked = "SELECT user_id FROM likes WHERE film_id = ?;";
-    private String updateLikes = "UPDATE films SET likes = likes + ? WHERE id = ?";
-    private String addUserLiked = "INSERT INTO likes VALUES(?, ?)";
-    private String deleteUserLiked = "DELETE FROM likes WHERE film_id = ? AND user_id = ?";
     private String findAllQuery = "SELECT f.id, f.name, f.description, f.release_date, f.duration, f.likes, f.rating_id, r.name AS mpa " +
             "FROM films f JOIN ratings r ON f.rating_id = r.id";
     private String insertFilmQuery = "INSERT INTO films(name, description, release_date, duration, likes, rating_id) " +
             "VALUES(?, ?, ?, ?, ?, ?);";
-    private String updateFilmQuery = "UPDATE films SET name = ?, description = ?, release_date = ?, duration = ? WHERE id = ?";
+    private String updateFilmQuery = "UPDATE films SET name = ?, description = ?, release_date = ?, duration = ?, rating_id = ? WHERE id = ?";
     private String deleteFilmQuery = "DELETE FROM likes WHERE film_id = ?;\n" +
             "DELETE FROM film_genre WHERE film_id = ?;\n" +
             "DELETE FROM films WHERE ID = ?;";
@@ -56,7 +53,11 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Collection<Film> findAll() {
-        return jdbc.query(findAllQuery, filmMapper);
+        List<Film> films = jdbc.query(findAllQuery, filmMapper);
+        for (Film film : films) {
+            film.setGenres(genreDbStorage.findFilmGenres(film.getId()));
+        }
+        return films;
     }
 
     @Override
@@ -91,17 +92,6 @@ public class FilmDbStorage implements FilmStorage {
         }, keyHolder);
 
         film.setId(keyHolder.getKeyAs(Long.class));
-
-        if (film.getGenres() != null) {
-            Set<Integer> genresIds = new HashSet<>(
-                    film.getGenres().stream()
-                            .map(Genre::getId)
-                            .toList());
-            film.setGenres(
-                    genreDbStorage.insertFilmGenres(film.getId(), genresIds));
-
-        }
-        log.debug("Фильм {} добавлен", film);
         return film;
     }
 
@@ -120,13 +110,16 @@ public class FilmDbStorage implements FilmStorage {
         if (newFilm.getDuration() == null) {
             newFilm.setDuration(oldFilm.getDuration());
         }
+        if (newFilm.getMpa() == null) {
+            newFilm.setMpa(oldFilm.getMpa());
+        }
+        if (newFilm.getGenres() == null) {
+            newFilm.setGenres(oldFilm.getGenres());
+        }
         jdbc.update(updateFilmQuery, newFilm.getName(), newFilm.getDescription(), newFilm.getReleaseDate(),
-                newFilm.getDuration(), newFilm.getId());
+                newFilm.getDuration(),  newFilm.getMpa().getId(), newFilm.getId());
         newFilm.setLikes(oldFilm.getLikes());
         newFilm.setUsersLikedIds(oldFilm.getUsersLikedIds());
-        newFilm.setGenres(oldFilm.getGenres());
-        newFilm.setMpa(oldFilm.getMpa());
-        log.debug("Изменение фильма {} на фильм {}", oldFilm, newFilm);
         return newFilm;
     }
 
@@ -137,27 +130,4 @@ public class FilmDbStorage implements FilmStorage {
         log.debug("Фильм с id = {} удален", id);
     }
 
-    @Override
-    public void addLike(Long filmId, Long userId) {
-        userDbStorage.findById(userId);
-        Film film = findById(filmId);
-        if (film.getUsersLikedIds().contains(userId)) {
-            log.info("Пользователь с id = {} уже поставил лайк фильму с id = {}", userId, filmId);
-        } else {
-            jdbc.update(updateLikes, 1, filmId);
-            jdbc.update(addUserLiked, filmId, userId);
-        }
-    }
-
-    @Override
-    public void deleteLike(Long filmId, Long userId) {
-        userDbStorage.findById(userId);
-        Film film = findById(filmId);
-        if (film.getUsersLikedIds().contains(userId)) {
-            jdbc.update(updateLikes, -1, filmId);
-            jdbc.update(deleteUserLiked, filmId, userId);
-        } else {
-            log.info("Пользователь с id = {} уже удалил лайк у фильма с id = {}", userId, filmId);
-        }
-    }
 }

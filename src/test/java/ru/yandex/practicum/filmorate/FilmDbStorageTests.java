@@ -8,7 +8,6 @@ import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.test.context.ContextConfiguration;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Mpa;
-import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.FilmDbStorage;
 import ru.yandex.practicum.filmorate.storage.GenreDbStorage;
 import ru.yandex.practicum.filmorate.storage.MpaDbStorage;
@@ -33,10 +32,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class FilmDbStorageTests {
     private final FilmDbStorage filmDbStorage;
-    private final UserDbStorage userDbStorage;
     private Film film1;
     private Film film2;
-    private User user1;
 
     @BeforeEach
     void beforeEach() {
@@ -55,12 +52,6 @@ public class FilmDbStorageTests {
                 .releaseDate(LocalDate.of(1987, Month.APRIL, 11))
                 .duration(100)
                 .mpa(mpa)
-                .build();
-        user1 = User.builder()
-                .login("qwa")
-                .name("qwe")
-                .email("qwo@qwu.com")
-                .birthday(LocalDate.of(1997, Month.APRIL, 6))
                 .build();
     }
 
@@ -101,24 +92,5 @@ public class FilmDbStorageTests {
         film2 = filmDbStorage.create(film2);
         filmDbStorage.remove(film1.getId());
         assertThat(filmDbStorage.findAll()).containsOnly(film2);
-    }
-
-    @Test
-    public void testFilmAddLike() {
-        user1 = userDbStorage.create(user1);
-        film1 = filmDbStorage.create(film1);
-        filmDbStorage.addLike(film1.getId(), user1.getId());
-        assertThat(filmDbStorage.findById(film1.getId()).getUsersLikedIds()).contains(user1.getId());
-        assertThat(filmDbStorage.findById(film1.getId()).getLikes()).isEqualTo(1);
-    }
-
-    @Test
-    public void testFilmDeleteLike() {
-        user1 = userDbStorage.create(user1);
-        film1 = filmDbStorage.create(film1);
-        filmDbStorage.addLike(film1.getId(), user1.getId());
-        filmDbStorage.deleteLike(film1.getId(), user1.getId());
-        assertThat(filmDbStorage.findById(film1.getId()).getUsersLikedIds()).isNullOrEmpty();
-        assertThat(filmDbStorage.findById(film1.getId()).getLikes()).isEqualTo(0);
     }
 }

@@ -26,6 +26,7 @@ public class GenreDbStorage {
     private String findByIdQuery = "SELECT * FROM genres WHERE id = ?;";
     private String findFilmGenres = "SELECT * FROM genres WHERE id IN (SELECT genre_id FROM film_genre WHERE film_id = ?);";
     private String insertFilmGenres = "INSERT INTO film_genre(film_id, genre_id) VALUES(?, ?);";
+    private String deleteFilmGenres = "DELETE FROM film_genre WHERE film_id = ? AND genre_id = ?;";
 
     public Collection<Genre> findAll() {
         return jdbc.query(findAllQuery, mapper).stream().sorted(Comparator.comparingInt(Genre::getId)).toList();
@@ -62,6 +63,24 @@ public class GenreDbStorage {
             insertFilmGenre(filmId, genreId);
         }
         return genres;
+    }
+
+    private void deleteFilmGenre(long filmId, int genreId) {
+        jdbc.update(deleteFilmGenres, filmId, genreId);
+    }
+
+    public List<Genre> updateFilmGenres(long filmId, Set<Integer> newGenresIds) {
+        Set<Integer> oldGenresIds = new HashSet<>(findFilmGenres(filmId).stream().map(Genre::getId).toList());
+        if (oldGenresIds.equals(newGenresIds)) {return oldGenresIds.stream().map(this::findById).toList();}
+
+        for (Integer id : newGenresIds) {
+            if (!oldGenresIds.contains(id)) {insertFilmGenre(filmId, id);}
+        }
+
+        for (Integer id : oldGenresIds) {
+            if (!newGenresIds.contains(id)) {deleteFilmGenre(filmId, id);}
+        }
+        return newGenresIds.stream().map(this::findById).toList();
     }
 
 }
