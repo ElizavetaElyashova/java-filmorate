@@ -29,13 +29,11 @@ public class FilmDbStorage implements FilmStorage {
     private FilmRowMapper filmMapper;
     private MpaDbStorage mpaDbStorage;
     private GenreDbStorage genreDbStorage;
-    private UserDbStorage userDbStorage;
 
     @Autowired
-    public FilmDbStorage(MpaDbStorage mpaDbStorage, GenreDbStorage genreDbStorage, UserDbStorage userDbStorage) {
+    public FilmDbStorage(MpaDbStorage mpaDbStorage, GenreDbStorage genreDbStorage) {
         this.mpaDbStorage = mpaDbStorage;
         this.genreDbStorage = genreDbStorage;
-        this.userDbStorage = userDbStorage;
     }
 
     private String findByIdQuery = "SELECT f.id, f.name, f.description, f.release_date, f.duration, f.likes, f.rating_id, r.name AS mpa " +
@@ -117,7 +115,7 @@ public class FilmDbStorage implements FilmStorage {
             newFilm.setGenres(oldFilm.getGenres());
         }
         jdbc.update(updateFilmQuery, newFilm.getName(), newFilm.getDescription(), newFilm.getReleaseDate(),
-                newFilm.getDuration(),  newFilm.getMpa().getId(), newFilm.getId());
+                newFilm.getDuration(), newFilm.getMpa().getId(), newFilm.getId());
         newFilm.setLikes(oldFilm.getLikes());
         newFilm.setUsersLikedIds(oldFilm.getUsersLikedIds());
         return newFilm;

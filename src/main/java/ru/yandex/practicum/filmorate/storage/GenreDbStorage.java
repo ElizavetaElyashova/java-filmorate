@@ -71,14 +71,20 @@ public class GenreDbStorage {
 
     public List<Genre> updateFilmGenres(long filmId, Set<Integer> newGenresIds) {
         Set<Integer> oldGenresIds = new HashSet<>(findFilmGenres(filmId).stream().map(Genre::getId).toList());
-        if (oldGenresIds.equals(newGenresIds)) {return oldGenresIds.stream().map(this::findById).toList();}
+        if (oldGenresIds.equals(newGenresIds)) {
+            return oldGenresIds.stream().map(this::findById).toList();
+        }
 
         for (Integer id : newGenresIds) {
-            if (!oldGenresIds.contains(id)) {insertFilmGenre(filmId, id);}
+            if (!oldGenresIds.contains(id)) {
+                insertFilmGenre(filmId, id);
+            }
         }
 
         for (Integer id : oldGenresIds) {
-            if (!newGenresIds.contains(id)) {deleteFilmGenre(filmId, id);}
+            if (!newGenresIds.contains(id)) {
+                deleteFilmGenre(filmId, id);
+            }
         }
         return newGenresIds.stream().map(this::findById).toList();
     }
