@@ -7,7 +7,7 @@ import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.*;
 
-@Component
+@Component("inMemoryUserStorage")
 @Slf4j
 public class InMemoryUserStorage implements UserStorage {
     private final Map<Long, User> users = new HashMap<>();
@@ -51,12 +51,12 @@ public class InMemoryUserStorage implements UserStorage {
             return newUser;
         }
         log.warn("Пользователь с id = {} не найден", newUser.getId());
-        throw new NotFoundException("Пользователь с id = " + newUser.getId() + " не найден");
+        throw new NotFoundException("Пользователь с id = " + newUser.getId() + " не найден.");
     }
 
     @Override
     public List<User> findFriends(Long id) {
-        log.trace("Возвращает друзей пользователя с id = {}", id);
+        log.trace("Возвращает друзей пользователя с id = {}.", id);
         return findById(id).getFriendsIds().stream()
                 .map(this::findById)
                 .toList();
@@ -64,8 +64,24 @@ public class InMemoryUserStorage implements UserStorage {
 
     public void remove(Long id) {
         if (findById(id) != null) {
+            log.info("Пользователь с id = {} был удален.", id);
             users.remove(id);
+        } else {
+            log.warn("Пользователь с id = {} не найден.", id);
+            throw new NotFoundException("Пользователь с id = " + id + " не найден.");
         }
+    }
+
+    public void addFriend(Long id, Long friendId) {
+        User user = findById(id);
+        User friend = findById(friendId);
+        user.getFriendsIds().add(friendId);
+    }
+
+    public void deleteFriend(Long id, Long friendId) {
+        User user = findById(id);
+        User friend = findById(friendId);
+        user.getFriendsIds().remove(friendId);
     }
 
     private long getNextId() {

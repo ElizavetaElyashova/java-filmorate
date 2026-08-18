@@ -1,6 +1,8 @@
 package ru.yandex.practicum.filmorate.storage;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -10,10 +12,17 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
-@Component
+@Component("inMemoryFilmStorage")
 @Slf4j
 public class InMemoryFilmStorage implements FilmStorage {
     private final Map<Long, Film> films = new HashMap<>();
+    @Qualifier("inMemoryUserStorage")
+    private final UserStorage userStorage;
+
+    @Autowired
+    public InMemoryFilmStorage(@Qualifier("inMemoryUserStorage") UserStorage userStorage) {
+        this.userStorage = userStorage;
+    }
 
     @Override
     public Collection<Film> findAll() {
@@ -64,5 +73,37 @@ public class InMemoryFilmStorage implements FilmStorage {
                 .max()
                 .orElse(0);
         return ++currentMaxId;
+    }
+
+    public void addLike(Long filmId, Long userId) {
+        if (userStorage.findById(userId) != null) {
+            Film film = findById(filmId);
+            if (film.getUsersLikedIds().add(userId)) {
+                log.debug("Количество лайков у фильма с id = {} было {}", film.getId(), film.getLikes());
+                film.setLikes(film.getLikes() + 1);
+                log.debug("Количество лайков у фильма с id = {} стало {}", film.getId(), film.getLikes());
+            } else {
+                log.info("Пользователь с id = {} уже поставил лайк фильму с id = {}", userId, filmId);
+            }
+        } else {
+            log.warn("Пользователь с id = {} не найден", filmId);
+            throw new NotFoundException("Пользователь с id = " + userId + " не найден");
+        }
+    }
+
+    public void deleteLike(Long filmId, Long userId) {
+        if (userStorage.findById(userId) != null) {
+            Film film = findById(filmId);
+            if (film.getUsersLikedIds().remove(userId)) {
+                log.debug("Количество лайков у фильма с id = {} было {}", film.getId(), film.getLikes());
+                film.setLikes(film.getLikes() - 1);
+                log.debug("Количество лайков у фильма с id = {} стало {}", film.getId(), film.getLikes());
+            } else {
+                log.info("Пользователь с id = {} уже удалил лайк у фильма с id = {}", userId, filmId);
+            }
+        } else {
+            log.warn("Пользователь с id = {} не найден", filmId);
+            throw new NotFoundException("Пользователь с id = " + userId + " не найден");
+        }
     }
 }

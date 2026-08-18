@@ -5,8 +5,10 @@ import com.google.gson.GsonBuilder;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.io.IOException;
@@ -20,6 +22,7 @@ import java.time.Month;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@AutoConfigureTestDatabase
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 class FilmorateApplicationTests {
     private static final String BASE = "http://localhost:8080";
@@ -134,6 +137,9 @@ class FilmorateApplicationTests {
 
     @Test
     void postFilms_whenValidFilm() throws IOException, InterruptedException {
+        Mpa mpa = new Mpa();
+        mpa.setId(1);
+        basicFilm.setMpa(mpa);
         String film = gson.toJson(basicFilm);
         HttpRequest req = HttpRequest.newBuilder()
                 .uri(URI.create(BASE + "/films"))
