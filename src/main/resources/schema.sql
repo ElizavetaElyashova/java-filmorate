@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS ratings (
   id integer AUTO_INCREMENT PRIMARY KEY,
-  name varchar UNIQUE 
+  name varchar UNIQUE
 );
 
 CREATE TABLE IF NOT EXISTS films (
@@ -44,4 +44,43 @@ CREATE TABLE IF NOT EXISTS friends (
   user_id long REFERENCES users(id),
   friend_id long REFERENCES users(id),
   PRIMARY KEY (user_id, friend_id)
+);
+
+CREATE TABLE IF NOT EXISTS reviews (
+  review_id long AUTO_INCREMENT PRIMARY KEY,
+  user_id long REFERENCES users(id),
+  film_id long REFERENCES films(id),
+  content varchar,
+  is_positive boolean,
+  useful integer
+);
+
+CREATE TABLE IF NOT EXISTS directors (
+  id long AUTO_INCREMENT PRIMARY KEY,
+  name varchar
+);
+
+CREATE TABLE IF NOT EXISTS film_director (
+  film_id long REFERENCES films(id),
+  director_id long REFERENCES directors(id),
+  PRIMARY KEY (film_id, director_id)
+);
+
+CREATE TABLE IF NOT EXISTS event_types (
+  id integer AUTO_INCREMENT PRIMARY KEY,
+  name varchar UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS operations (
+  id integer AUTO_INCREMENT PRIMARY KEY,
+  name varchar UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS feed (
+  event_id long AUTO_INCREMENT PRIMARY KEY,
+  event_type_id integer REFERENCES event_types(id),
+  operation_id integer REFERENCES operations(id),
+  entity_id long,
+  user_id long REFERENCES users(id),
+  timestamp TIMESTAMP 
 );
