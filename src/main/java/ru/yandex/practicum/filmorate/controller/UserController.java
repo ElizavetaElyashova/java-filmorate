@@ -47,11 +47,10 @@ public class UserController {
     }
 
     @GetMapping("/{id}/recommendations")
-    public List<Film> getRecommendations(
-            @PathVariable Long id
-    ) {
+    public List<Film> getRecommendations(@PathVariable Long id) {
         return recommendationService.getRecommendations(id);
     }
+
     @PostMapping
     public User create(@RequestBody @Valid User user) {
         return userService.getUserStorage().create(user);
