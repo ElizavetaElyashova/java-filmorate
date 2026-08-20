@@ -30,8 +30,7 @@ public class FeedDbStorage {
             "VALUES(?, ?, ?, ?, ?)";
 
     public Collection<Event> findFeedByUserId(long userId) {
-        List<Event> feed = jdbc.query(findFeedByUserIdQuery, eventMapper, userId);
-        return feed;
+        return jdbc.query(findFeedByUserIdQuery, eventMapper, userId);
     }
 
     public void create(Event event) {

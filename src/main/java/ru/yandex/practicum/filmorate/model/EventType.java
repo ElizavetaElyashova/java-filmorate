@@ -13,5 +13,5 @@ public class EventType {
         this.id = id;
     }
 
-    public EventType() {};
+    public EventType() {}
 }
