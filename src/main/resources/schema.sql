@@ -48,11 +48,23 @@ CREATE TABLE IF NOT EXISTS friends (
 
 CREATE TABLE IF NOT EXISTS reviews (
   review_id long AUTO_INCREMENT PRIMARY KEY,
-  user_id long REFERENCES users(id),
-  film_id long REFERENCES films(id),
+  user_id long REFERENCES users(id) ON DELETE CASCADE,
+  film_id long REFERENCES films(id) ON DELETE CASCADE,
   content varchar,
   is_positive boolean,
   useful integer
+);
+
+CREATE TABLE IF NOT EXISTS reviews_likes (
+    review_id long REFERENCES reviews(review_id),
+    user_id long REFERENCES users(id),
+    PRIMARY KEY(review_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS reviews_dislikes (
+    review_id long REFERENCES reviews(review_id),
+    user_id long REFERENCES users(id),
+    PRIMARY KEY(review_id, user_id)
 );
 
 CREATE TABLE IF NOT EXISTS directors (
