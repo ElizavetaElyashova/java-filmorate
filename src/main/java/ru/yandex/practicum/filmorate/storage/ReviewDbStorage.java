@@ -127,7 +127,7 @@ public class ReviewDbStorage {
         jdbc.update(deleteUserDislikedQuery, reviewId, userId);
     }
 
-    public void removeReview(Long review_id) {
-        jdbc.update(deleteReviewQuery, review_id);
+    public void removeReview(Long reviewId) {
+        jdbc.update(deleteReviewQuery, reviewId);
     }
 }
