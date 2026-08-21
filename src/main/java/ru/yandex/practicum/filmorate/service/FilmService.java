@@ -72,6 +72,21 @@ public class FilmService {
                 .toList();
     }
 
+    public List<Film> findCommonFilms(Long userId, Long friendId) {
+        // Проверяем существование пользователей
+        userStorage.findById(userId);
+        userStorage.findById(friendId);
+
+        List<Film> films = filmStorage.findCommonFilms(userId, friendId);
+
+        for (Film film : films) {
+            film.setGenres(genreDbStorage.findFilmGenres(film.getId()));
+        }
+
+        log.trace("Возвращает общие популярные фильмы в количестве {}", films.size());
+        return films;
+    }
+
     public Film create(Film film) {
         if (film.getGenres() != null) {
             Set<Integer> genresIds = new HashSet<>(
