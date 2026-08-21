@@ -51,50 +51,29 @@ public class ReviewService {
         }
     }
 
-    public void addLike(Long reviewId, Long userId) {
+    public void addReaction(Long reviewId, Long userId, boolean userLiked) {
         Review review = reviewDbStorage.findById(reviewId);
         userDbStorage.findById(userId);
-        Collection<Long> usersLiked = reviewDbStorage.findUsersLiked(reviewId);
+        Collection<Long> usersLiked = reviewDbStorage.findUsersReacted(reviewId, userLiked);
         if (!usersLiked.contains(userId)) {
-            review = removeDislike(reviewId, userId);
-            review.setUseful(review.getUseful() + 1);
+            review = removeReaction(reviewId, userId, !userLiked);
+            int i = userLiked ? 1 : -1;
+            review.setUseful(review.getUseful() + i);
             update(review);
-            reviewDbStorage.addUserLiked(reviewId, userId);
+            reviewDbStorage.addUserReaction(reviewId, userId, userLiked);
         }
     }
 
-    public void addDislike(Long reviewId, Long userId) {
-        Review review = reviewDbStorage.findById(reviewId);
-        userDbStorage.findById(userId);
-        Collection<Long> usersDisliked = reviewDbStorage.findUsersDisliked(reviewId);
-        if (!usersDisliked.contains(userId)) {
-            review = removeLike(reviewId, userId);
-            review.setUseful(review.getUseful() - 1);
-            update(review);
-            reviewDbStorage.addUserDisliked(reviewId, userId);
-        }
-    }
 
-    public Review removeLike(Long reviewId, Long userId) {
+    public Review removeReaction(Long reviewId, Long userId, boolean userLiked) {
         Review review = reviewDbStorage.findById(reviewId);
         userDbStorage.findById(userId);
-        Collection<Long> usersLiked = reviewDbStorage.findUsersLiked(reviewId);
-        if (usersLiked.contains(userId)) {
-            review.setUseful(review.getUseful() - 1);
+        Collection<Long> usersReacted = reviewDbStorage.findUsersReacted(reviewId, userLiked);
+        if (usersReacted.contains(userId)) {
+            int i = userLiked ? 1 : -1;
+            review.setUseful(review.getUseful() - i);
             review = update(review);
-            reviewDbStorage.removeUserLiked(reviewId, userId);
-        }
-        return review;
-    }
-
-    public Review removeDislike(Long reviewId, Long userId) {
-        Review review = reviewDbStorage.findById(reviewId);
-        userDbStorage.findById(userId);
-        Collection<Long> usersDisliked = reviewDbStorage.findUsersDisliked(reviewId);
-        if (usersDisliked.contains(userId)) {
-            review.setUseful(review.getUseful() + 1);
-            review = update(review);
-            reviewDbStorage.removeUserDisliked(reviewId, userId);
+            reviewDbStorage.removeUserReacted(reviewId, userId, userLiked);
         }
         return review;
     }

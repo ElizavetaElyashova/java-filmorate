@@ -27,12 +27,9 @@ public class ReviewDbStorage {
             "WHERE review_id = ?";
     private String findAllQuery = "SELECT * FROM reviews ORDER BY useful DESC LIMIT ?";
     private String findFilmReviewsQuery = "SELECT * FROM reviews WHERE film_id = ? ORDER BY useful DESC LIMIT ?";
-    private String findUsersLikedQuery = "SELECT user_id FROM reviews_likes WHERE review_id = ?";
-    private String findUsersDislikedQuery = "SELECT user_id FROM reviews_dislikes WHERE review_id = ?";
-    private String insertUserLikedQuery = "INSERT INTO reviews_likes(review_id, user_id) VALUES(?, ?)";
-    private String insertUserDislikedQuery = "INSERT INTO reviews_dislikes(review_id, user_id) VALUES(?, ?)";
-    private String deleteUserLikedQuery = "DELETE FROM reviews_likes WHERE review_id = ? AND user_id = ?";
-    private String deleteUserDislikedQuery = "DELETE FROM reviews_dislikes WHERE review_id = ? AND user_id = ?";
+    private String findUsersReactedQuery = "SELECT user_id FROM reviews_reactions WHERE review_id = ? AND user_liked = ?";
+    private String insertUserReactedQuery = "INSERT INTO reviews_reactions(review_id, user_id, user_liked) VALUES(?, ?, ?)";
+    private String deleteUserReactedQuery = "DELETE FROM reviews_reactions WHERE review_id = ? AND user_id = ? AND user_liked = ?";
     private String deleteReviewQuery = "DELETE FROM reviews WHERE review_id = ?";
 
     public Review create(Review review) {
@@ -91,40 +88,23 @@ public class ReviewDbStorage {
         return newReview;
     }
 
-    public Collection<Long> findUsersLiked(Long reviewId) {
-        return jdbc.queryForList(findUsersLikedQuery, Long.class, reviewId);
+    public Collection<Long> findUsersReacted(Long reviewId, boolean userLiked) {
+        return jdbc.queryForList(findUsersReactedQuery, Long.class, reviewId, userLiked);
     }
 
-    public Collection<Long> findUsersDisliked(Long reviewId) {
-        return jdbc.queryForList(findUsersDislikedQuery, Long.class, reviewId);
-    }
-
-    public void addUserLiked(Long reviewId, Long userId) {
+    public void addUserReaction(Long reviewId, Long userId, boolean userLiked) {
         GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
         jdbc.update(con -> {
-            PreparedStatement ps = con.prepareStatement(insertUserLikedQuery, Statement.RETURN_GENERATED_KEYS);
+            PreparedStatement ps = con.prepareStatement(insertUserReactedQuery, Statement.RETURN_GENERATED_KEYS);
             ps.setObject(1, reviewId);
             ps.setObject(2, userId);
+            ps.setObject(3, userLiked);
             return ps;
         }, keyHolder);
     }
 
-    public void addUserDisliked(Long reviewId, Long userId) {
-        GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
-        jdbc.update(con -> {
-            PreparedStatement ps = con.prepareStatement(insertUserDislikedQuery, Statement.RETURN_GENERATED_KEYS);
-            ps.setObject(1, reviewId);
-            ps.setObject(2, userId);
-            return ps;
-        }, keyHolder);
-    }
-
-    public void removeUserLiked(Long reviewId, Long userId) {
-        jdbc.update(deleteUserLikedQuery, reviewId, userId);
-    }
-
-    public void removeUserDisliked(Long reviewId, Long userId) {
-        jdbc.update(deleteUserDislikedQuery, reviewId, userId);
+    public void removeUserReacted(Long reviewId, Long userId, boolean userLiked) {
+        jdbc.update(deleteUserReactedQuery, reviewId, userId, userLiked);
     }
 
     public void removeReview(Long reviewId) {

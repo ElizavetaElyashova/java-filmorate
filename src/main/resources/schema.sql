@@ -55,15 +55,10 @@ CREATE TABLE IF NOT EXISTS reviews (
   useful integer
 );
 
-CREATE TABLE IF NOT EXISTS reviews_likes (
+CREATE TABLE IF NOT EXISTS reviews_reactions (
     review_id long REFERENCES reviews(review_id),
     user_id long REFERENCES users(id),
-    PRIMARY KEY(review_id, user_id)
-);
-
-CREATE TABLE IF NOT EXISTS reviews_dislikes (
-    review_id long REFERENCES reviews(review_id),
-    user_id long REFERENCES users(id),
+    user_liked boolean,
     PRIMARY KEY(review_id, user_id)
 );
 
