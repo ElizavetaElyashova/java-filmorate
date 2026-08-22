@@ -9,9 +9,8 @@ import ru.yandex.practicum.filmorate.storage.mappers.EventRowMapper;
 
 import java.sql.PreparedStatement;
 import java.sql.Statement;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Collection;
-import java.util.List;
 
 @Repository
 public class FeedDbStorage {
@@ -20,7 +19,7 @@ public class FeedDbStorage {
     @Autowired
     private EventRowMapper eventMapper;
 
-    private String findFeedByUserIdQuery = "SELECT f.event_id, f.event_type_id, f.operation_id, f.entity_id, f.user_id, f.timestamp," +
+    private String findFeedByUserIdQuery = "SELECT f.event_id, f.entity_id, f.user_id, f.timestamp," +
             "e.name AS event_type, o.name AS operation " +
             "FROM feed f " +
             "JOIN event_types AS e ON f.event_type_id = e.id " +
@@ -33,15 +32,15 @@ public class FeedDbStorage {
         return jdbc.query(findFeedByUserIdQuery, eventMapper, userId);
     }
 
-    public void create(Event event) {
+    public void create(Event event, int eventTypeId, int operationId) {
         GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
         jdbc.update(con -> {
             PreparedStatement ps = con.prepareStatement(insertEventQuery, Statement.RETURN_GENERATED_KEYS);
-            ps.setObject(1, event.getEventType().getId());
-            ps.setObject(2, event.getOperation().getId());
+            ps.setObject(1, eventTypeId);
+            ps.setObject(2, operationId);
             ps.setObject(3, event.getEntityId());
             ps.setObject(4, event.getUserId());
-            ps.setObject(5, LocalDateTime.now());
+            ps.setObject(5, Instant.now());
             return ps;
         }, keyHolder);
     }

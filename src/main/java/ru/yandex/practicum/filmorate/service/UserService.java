@@ -6,8 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.Event;
-import ru.yandex.practicum.filmorate.model.EventType;
-import ru.yandex.practicum.filmorate.model.Operation;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.FeedDbStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
@@ -34,9 +32,7 @@ public class UserService {
         feedDbStorage.create(Event.builder()
                 .userId(id)
                 .entityId(friendId)
-                .eventType(new EventType(3))
-                .operation(new Operation(2))
-                .build());
+                .build(), 3, 2);
         log.trace("Пользователь с id = {} добавляет в друзья пользователя с id = {}", id, friendId);
     }
 
@@ -45,9 +41,7 @@ public class UserService {
         feedDbStorage.create(Event.builder()
                 .userId(id)
                 .entityId(friendId)
-                .eventType(new EventType(3))
-                .operation(new Operation(1))
-                .build());
+                .build(), 3, 1);
         log.trace("Пользователь с id = {} удаляет из друзей пользователя с id = {}", id, friendId);
     }
 

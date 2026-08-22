@@ -6,7 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.model.*;
+import ru.yandex.practicum.filmorate.model.Event;
+import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.*;
 
 import java.util.Comparator;
@@ -53,9 +55,7 @@ public class FilmService {
             feedDbStorage.create(Event.builder()
                     .userId(userId)
                     .entityId(filmId)
-                    .eventType(new EventType(1))
-                    .operation(new Operation(2))
-                    .build());
+                    .build(), 1, 2);
             log.trace("Пользователь с id = {} ставит лайк фильму с id = {}", filmId, userId);
         }
     }
@@ -69,9 +69,7 @@ public class FilmService {
             feedDbStorage.create(Event.builder()
                     .userId(userId)
                     .entityId(filmId)
-                    .eventType(new EventType(1))
-                    .operation(new Operation(1))
-                    .build());
+                    .build(), 1, 1);
         } else {
             log.info("Пользователь с id = {} уже удалил лайк у фильма с id = {}", userId, filmId);
         }

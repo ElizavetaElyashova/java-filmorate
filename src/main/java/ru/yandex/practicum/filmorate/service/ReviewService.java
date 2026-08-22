@@ -2,7 +2,9 @@ package ru.yandex.practicum.filmorate.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Review;
+import ru.yandex.practicum.filmorate.storage.FeedDbStorage;
 import ru.yandex.practicum.filmorate.storage.FilmDbStorage;
 import ru.yandex.practicum.filmorate.storage.ReviewDbStorage;
 import ru.yandex.practicum.filmorate.storage.UserDbStorage;
@@ -15,11 +17,13 @@ public class ReviewService {
     private ReviewDbStorage reviewDbStorage;
     private FilmDbStorage filmDbStorage;
     private UserDbStorage userDbStorage;
+    private FeedDbStorage feedDbStorage;
 
     @Autowired
-    public ReviewService(FilmDbStorage filmDbStorage, UserDbStorage userDbStorage) {
+    public ReviewService(FilmDbStorage filmDbStorage, UserDbStorage userDbStorage, FeedDbStorage feedDbStorage) {
         this.filmDbStorage = filmDbStorage;
         this.userDbStorage = userDbStorage;
+        this.feedDbStorage = feedDbStorage;
     }
 
     public Review findById(long id) {
@@ -29,7 +33,14 @@ public class ReviewService {
     public Review create(Review review) {
         filmDbStorage.findById(review.getFilmId());
         userDbStorage.findById(review.getUserId());
-        return reviewDbStorage.create(review);
+        review = reviewDbStorage.create(review);
+        feedDbStorage.create(Event.builder()
+                        .userId(review.getUserId())
+                        .entityId(review.getReviewId())
+                        .build(),
+                2, 2
+        );
+        return review;
     }
 
     public Review update(Review newReview) {
@@ -39,7 +50,13 @@ public class ReviewService {
         if (newReview.getUserId() != null) {
             userDbStorage.findById(newReview.getUserId());
         }
-        return reviewDbStorage.update(newReview);
+        newReview = reviewDbStorage.update(newReview);
+        feedDbStorage.create(Event.builder()
+                .userId(newReview.getUserId())
+                .entityId(newReview.getReviewId())
+
+                .build(), 2, 3);
+        return newReview;
     }
 
     public Collection<Review> findReviews(Long filmId, int count) {
@@ -79,6 +96,11 @@ public class ReviewService {
     }
 
     public void removeReview(Long id) {
+        Review review = reviewDbStorage.findById(id);
         reviewDbStorage.removeReview(id);
+        feedDbStorage.create(Event.builder()
+                .userId(review.getUserId())
+                .entityId(id)
+                .build(), 2, 1);
     }
 }
