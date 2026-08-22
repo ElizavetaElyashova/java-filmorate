@@ -16,5 +16,4 @@ public interface FilmStorage {
     Film update(@RequestBody @Valid Film newFilm);
 
     void remove(Long id);
-
 }

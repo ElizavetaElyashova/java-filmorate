@@ -1,11 +1,15 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.DuplicateException;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.*;
@@ -18,28 +22,18 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class FilmService {
     @Getter
-    @Autowired
-    @Qualifier("filmDbStorage")
-    private FilmStorage filmStorage;
-    @Qualifier("userDbStorage")
-    private UserStorage userStorage;
-    private GenreDbStorage genreDbStorage;
-    private JdbcTemplate jdbc;
+    private final FilmStorage filmStorage;
+    private final UserStorage userStorage;
+    private final GenreDbStorage genreDbStorage;
+    private final DirectorDbStorage directorStorage;
+    private final JdbcTemplate jdbc;
 
     private String updateLikes = "UPDATE films SET likes = likes + ? WHERE id = ?";
     private String addUserLiked = "INSERT INTO likes VALUES(?, ?)";
     private String deleteUserLiked = "DELETE FROM likes WHERE film_id = ? AND user_id = ?";
-
-    @Autowired
-    public FilmService(FilmDbStorage filmStorage, UserDbStorage userStorage, GenreDbStorage genreDbStorage, JdbcTemplate jdbc) {
-        this.filmStorage = filmStorage;
-        this.userStorage = userStorage;
-        this.genreDbStorage = genreDbStorage;
-        this.jdbc = jdbc;
-    }
-
 
     public void addLike(Long filmId, Long userId) {
         userStorage.findById(userId);
@@ -73,6 +67,7 @@ public class FilmService {
     }
 
     public Film create(Film film) {
+        film = filmStorage.create(film);
         if (film.getGenres() != null) {
             Set<Integer> genresIds = new HashSet<>(
                     film.getGenres().stream()
@@ -81,12 +76,10 @@ public class FilmService {
             for (int id : genresIds) {
                 genreDbStorage.findById(id);
             }
-            film = filmStorage.create(film);
-            film.setGenres(
-                    genreDbStorage.insertFilmGenres(film.getId(), genresIds));
+            film.setGenres(genreDbStorage.insertFilmGenres(film.getId(), genresIds));
+        }
+        if (film.getDirectors() != null) {
 
-        } else {
-            film = filmStorage.create(film);
         }
         log.debug("Фильм {} добавлен", film);
         return film;
@@ -103,5 +96,18 @@ public class FilmService {
         newFilm = filmStorage.update(newFilm);
         genreDbStorage.updateFilmGenres(newFilm.getId(), newFilm.getGenres().stream().map(Genre::getId).collect(Collectors.toSet()));
         return newFilm;
+    }
+
+    private boolean isDirectorExist(Long id) {
+        return directorStorage.findAllDirectors().stream()
+                .map(Director::getId)
+                .collect(Collectors.toSet()).contains(id);
+    }
+
+    public List<Film> findAllDirectorsFilmsSorted(Long directorId, String sortType) {
+        if (isDirectorExist(directorId)) {
+            return directorStorage.findAllDirectorsFilmsSorted(directorId, sortType);
+        }
+        throw new NotFoundException("Отсутствует режиссер с id = " + directorId.toString());
     }
 }
