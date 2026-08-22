@@ -10,6 +10,7 @@ import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.storage.mappers.MpaRowMapper;
 
 import java.util.Collection;
+import java.util.Comparator;
 
 @Repository
 @Slf4j
@@ -23,7 +24,9 @@ public class MpaDbStorage {
     private static String findByIdQuery = "SELECT * FROM ratings WHERE id = ?;";
 
     public Collection<Mpa> findAll() {
-        return jdbc.query(findAllQuery, mapper);
+        return jdbc.query(findAllQuery, mapper).stream()
+                .sorted(Comparator.comparingInt(Mpa::getId))
+                .toList();
     }
 
     public Mpa findById(Integer id) {

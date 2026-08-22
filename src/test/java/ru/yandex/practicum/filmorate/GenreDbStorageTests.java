@@ -14,10 +14,7 @@ import ru.yandex.practicum.filmorate.storage.FilmDbStorage;
 import ru.yandex.practicum.filmorate.storage.GenreDbStorage;
 import ru.yandex.practicum.filmorate.storage.MpaDbStorage;
 import ru.yandex.practicum.filmorate.storage.UserDbStorage;
-import ru.yandex.practicum.filmorate.storage.mappers.FilmRowMapper;
-import ru.yandex.practicum.filmorate.storage.mappers.GenreRowMapper;
-import ru.yandex.practicum.filmorate.storage.mappers.MpaRowMapper;
-import ru.yandex.practicum.filmorate.storage.mappers.UserRowMapper;
+import ru.yandex.practicum.filmorate.storage.mappers.*;
 
 import java.time.LocalDate;
 import java.time.Month;
@@ -31,7 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ContextConfiguration(classes = {GenreDbStorage.class, GenreRowMapper.class,
         FilmDbStorage.class, FilmRowMapper.class,
         MpaDbStorage.class, MpaRowMapper.class,
-        UserDbStorage.class, UserRowMapper.class})
+        UserDbStorage.class, UserRowMapper.class, DirectorRowMapper.class})
 public class GenreDbStorageTests {
     private final GenreDbStorage genreDbStorage;
     private final FilmDbStorage filmDbStorage;

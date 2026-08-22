@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.controller;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -55,5 +56,13 @@ public class FilmController {
     @DeleteMapping("/{id}/like/{userId}")
     public void deleteLike(@PathVariable("id") Long filmId, @PathVariable Long userId) {
         filmService.deleteLike(filmId, userId);
+    }
+
+    @GetMapping("/director/{directorId}")
+    public ResponseEntity<Collection<Film>> findAllDirectorsFilmsSorted(
+            @PathVariable Long directorId,
+            @RequestParam(required = false, defaultValue = "year") String sortBy
+    ){
+        return ResponseEntity.ok(filmService.findAllDirectorsFilmsSorted(directorId, sortBy));
     }
 }

@@ -6,6 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.DuplicateException;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.*;
@@ -73,6 +76,7 @@ public class FilmService {
     }
 
     public Film create(Film film) {
+        film = filmStorage.create(film);
         if (film.getGenres() != null) {
             Set<Integer> genresIds = new HashSet<>(
                     film.getGenres().stream()
@@ -81,12 +85,10 @@ public class FilmService {
             for (int id : genresIds) {
                 genreDbStorage.findById(id);
             }
-            film = filmStorage.create(film);
-            film.setGenres(
-                    genreDbStorage.insertFilmGenres(film.getId(), genresIds));
+            film.setGenres(genreDbStorage.insertFilmGenres(film.getId(), genresIds));
+        }
+        if (film.getDirectors() != null) {
 
-        } else {
-            film = filmStorage.create(film);
         }
         log.debug("Фильм {} добавлен", film);
         return film;
@@ -103,5 +105,51 @@ public class FilmService {
         newFilm = filmStorage.update(newFilm);
         genreDbStorage.updateFilmGenres(newFilm.getId(), newFilm.getGenres().stream().map(Genre::getId).collect(Collectors.toSet()));
         return newFilm;
+    }
+
+    public Director createDirector(String name) {
+        Set<String> directorsNames = filmStorage.findAllDirectors().stream()
+                .map(director -> director.getName().toLowerCase())
+                .collect(Collectors.toSet());
+        if (directorsNames.contains(name.toLowerCase()))
+            throw new DuplicateException("Режиссер с таким именем уже содержится в БД");
+        return filmStorage.createDirector(name);
+    }
+
+    public List<Director> findAllDirectors() {
+        return filmStorage.findAllDirectors();
+    }
+
+    public Director findDirectorById(Long id) {
+        return filmStorage.findDirectorById(id)
+                .orElseThrow(() -> new NotFoundException("Не удалось найти режиссера с id = " + id.toString()));
+    }
+
+    public Director updateDirector(Director updatedDirector) {
+        if (!isDirectorExist(updatedDirector.getId())) {
+            throw new NotFoundException("Отсутствует режиссер с id = " + updatedDirector.getId().toString());
+        }
+
+        return filmStorage.updateDirector(updatedDirector);
+    }
+
+    public void deleteDirector(Long id) {
+        if (!isDirectorExist(id)) {
+            throw new NotFoundException("Отсутствует режиссер с id = " + id.toString());
+        }
+
+        filmStorage.deleteDirector(id);
+    }
+
+    private boolean isDirectorExist(Long id) {
+        return filmStorage.findAllDirectors().stream()
+                .map(Director::getId)
+                .collect(Collectors.toSet()).contains(id);
+    }
+
+    public List<Film> findAllDirectorsFilmsSorted(Long directorId, String sortType){
+        if (isDirectorExist(directorId)) {
+            return filmStorage.findAllDirectorsFilmsSorted(directorId, sortType);
+        } throw new NotFoundException("Отсутствует режиссер с id = " + directorId.toString());
     }
 }

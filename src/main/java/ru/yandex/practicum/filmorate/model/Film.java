@@ -8,6 +8,7 @@ import lombok.Data;
 import ru.yandex.practicum.filmorate.validation.DateNotBefore;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -28,6 +29,8 @@ public class Film {
     private Set<Long> usersLikedIds;
     private Mpa mpa;
     private List<Genre> genres;
+    @Builder.Default
+    private List<Director> directors = new ArrayList<>();
 
     @Override
     public boolean equals(Object o) {
