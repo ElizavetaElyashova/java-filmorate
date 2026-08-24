@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.*;
@@ -26,6 +27,7 @@ public class FilmService {
     @Qualifier("userDbStorage")
     private UserStorage userStorage;
     private GenreDbStorage genreDbStorage;
+    private FeedDbStorage feedDbStorage;
     private JdbcTemplate jdbc;
 
     private String updateLikes = "UPDATE films SET likes = likes + ? WHERE id = ?";
@@ -33,10 +35,11 @@ public class FilmService {
     private String deleteUserLiked = "DELETE FROM likes WHERE film_id = ? AND user_id = ?";
 
     @Autowired
-    public FilmService(FilmDbStorage filmStorage, UserDbStorage userStorage, GenreDbStorage genreDbStorage, JdbcTemplate jdbc) {
+    public FilmService(FilmDbStorage filmStorage, UserDbStorage userStorage, GenreDbStorage genreDbStorage, FeedDbStorage feedDbStorage, JdbcTemplate jdbc) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
         this.genreDbStorage = genreDbStorage;
+        this.feedDbStorage = feedDbStorage;
         this.jdbc = jdbc;
     }
 
@@ -49,6 +52,10 @@ public class FilmService {
         } else {
             jdbc.update(updateLikes, 1, filmId);
             jdbc.update(addUserLiked, filmId, userId);
+            feedDbStorage.create(Event.builder()
+                    .userId(userId)
+                    .entityId(filmId)
+                    .build(), 1, 2);
             log.trace("Пользователь с id = {} ставит лайк фильму с id = {}", filmId, userId);
         }
     }
@@ -59,6 +66,10 @@ public class FilmService {
         if (film.getUsersLikedIds().contains(userId)) {
             jdbc.update(updateLikes, -1, filmId);
             jdbc.update(deleteUserLiked, filmId, userId);
+            feedDbStorage.create(Event.builder()
+                    .userId(userId)
+                    .entityId(filmId)
+                    .build(), 1, 1);
         } else {
             log.info("Пользователь с id = {} уже удалил лайк у фильма с id = {}", userId, filmId);
         }
