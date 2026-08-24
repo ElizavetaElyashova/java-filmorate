@@ -55,6 +55,14 @@ public class FilmDbStorage implements FilmStorage {
                     "JOIN likes l2 ON l2.film_id = f.id " +
                     "WHERE l1.user_id = ? AND l2.user_id = ? " +
                     "ORDER BY f.likes DESC, f.id ASC;";
+    private final String findPopularByGenreAndYearQuery =
+            "SELECT f.id, f.name, f.description, f.release_date, f.duration, f.likes, f.rating_id, r.name AS mpa " +
+                    "FROM films f " +
+                    "JOIN ratings r ON f.rating_id = r.id " +
+                    "JOIN film_genre fg ON fg.film_id = f.id " +
+                    "WHERE fg.genre_id = ? AND EXTRACT(YEAR FROM f.release_date) = ? " +
+                    "ORDER BY f.likes DESC, f.id ASC " +
+                    "LIMIT ?;";
 
 
     @Override
@@ -85,6 +93,11 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public List<Film> findCommonFilms(Long userId, Long friendId) {
         return jdbc.query(findCommonFilmsQuery, filmMapper, userId, friendId);
+    }
+
+    @Override
+    public List<Film> findPopularByGenreAndYear(Long genreId, int year, int count) {
+        return jdbc.query(findPopularByGenreAndYearQuery, filmMapper, genreId.intValue(), year, count);
     }
 
     @Override

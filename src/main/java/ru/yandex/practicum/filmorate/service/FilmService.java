@@ -25,6 +25,7 @@ public class FilmService {
     @Qualifier("filmDbStorage")
     private FilmStorage filmStorage;
     @Qualifier("userDbStorage")
+    private static final String ERROR_WRONG_NUM_OF_ARGS = "GET /films/popular?count={limit}&genreId={genreId}&year={year} OR /films/popular?count={limit}";
     private UserStorage userStorage;
     private GenreDbStorage genreDbStorage;
     private FeedDbStorage feedDbStorage;
@@ -75,12 +76,36 @@ public class FilmService {
         }
     }
 
-    public List<Film> findPopular(int count) {
-        log.trace("Возвращает популярные фильмы в количестве {}", count);
-        return filmStorage.findAll().stream()
-                .sorted(Comparator.comparingInt(Film::getLikes).reversed())
-                .limit(count)
-                .toList();
+    public List<Film> findPopular(Integer count, Long genreId, Integer year) {
+        if (count == null) {
+            // count обязателен
+            throw new IllegalArgumentException(ERROR_WRONG_NUM_OF_ARGS);
+        }
+
+        boolean hasGenre = genreId != null;
+        boolean hasYear = year != null;
+
+        if (!hasGenre && !hasYear) {
+            // /films/popular?count={limit}
+            return filmStorage.findAll().stream()
+                    .sorted(Comparator.comparingInt(Film::getLikes).reversed())
+                    .limit(count)
+                    .toList();
+        }
+
+        if (hasGenre && hasYear) {
+            // /films/popular?count={limit}&genreId={genreId}&year={year}
+            genreDbStorage.findById(genreId.intValue());
+
+            List<Film> films = filmStorage.findPopularByGenreAndYear(genreId, year, count);
+            for (Film film : films) {
+                film.setGenres(genreDbStorage.findFilmGenres(film.getId()));
+            }
+            return films;
+        }
+
+        // только genreId или только year
+        throw new IllegalArgumentException(ERROR_WRONG_NUM_OF_ARGS);
     }
 
     public List<Film> findCommonFilms(Long userId, Long friendId) {
