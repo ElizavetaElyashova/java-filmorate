@@ -76,36 +76,37 @@ public class FilmService {
         }
     }
 
-    public List<Film> findPopular(Integer count, Long genreId, Integer year) {
-        if (count == null) {
-            // count обязателен
-            throw new IllegalArgumentException(ERROR_WRONG_NUM_OF_ARGS);
-        }
-
+    public List<Film> findPopular(int count, Long genreId, Integer year) {
         boolean hasGenre = genreId != null;
         boolean hasYear = year != null;
 
+        List<Film> films;
+
         if (!hasGenre && !hasYear) {
-            // /films/popular?count={limit}
-            return filmStorage.findAll().stream()
+            // /films/popular?count=...
+            films = filmStorage.findAll().stream()
                     .sorted(Comparator.comparingInt(Film::getLikes).reversed())
                     .limit(count)
                     .toList();
-        }
-
-        if (hasGenre && hasYear) {
-            // /films/popular?count={limit}&genreId={genreId}&year={year}
-            genreDbStorage.findById(genreId.intValue());
-
-            List<Film> films = filmStorage.findPopularByGenreAndYear(genreId, year, count);
-            for (Film film : films) {
-                film.setGenres(genreDbStorage.findFilmGenres(film.getId()));
-            }
             return films;
         }
 
-        // только genreId или только year
-        throw new IllegalArgumentException(ERROR_WRONG_NUM_OF_ARGS);
+        if (hasGenre && !hasYear) {
+            // /films/popular?count=...&genreId=...
+            films = filmStorage.findPopularByGenre(genreId, count);
+        } else if (!hasGenre && hasYear) {
+            // /films/popular?count=...&year=...
+            films = filmStorage.findPopularByYear(year, count);
+        } else {
+            // /films/popular?count=...&genreId=...&year=...
+            genreDbStorage.findById(genreId.intValue());
+            films = filmStorage.findPopularByGenreAndYear(genreId, year, count);
+        }
+
+        for (Film film : films) {
+            film.setGenres(genreDbStorage.findFilmGenres(film.getId()));
+        }
+        return films;
     }
 
     public List<Film> findCommonFilms(Long userId, Long friendId) {
