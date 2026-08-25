@@ -19,4 +19,6 @@ public interface FilmStorage {
     Film update(@RequestBody @Valid Film newFilm);
 
     void remove(Long id);
+
+    List<Film> search(String query, String by);
 }
