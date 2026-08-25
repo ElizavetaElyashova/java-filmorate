@@ -57,4 +57,8 @@ public class UserService {
     public Collection<Event> findFeedByUserId(long id) {
         return feedDbStorage.findFeedByUserId(id);
     }
+
+    public void remove(Long id) {
+        userStorage.remove(id);
+    }
 }

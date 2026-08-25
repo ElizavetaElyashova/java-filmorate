@@ -130,4 +130,8 @@ public class FilmService {
         genreDbStorage.updateFilmGenres(newFilm.getId(), newFilm.getGenres().stream().map(Genre::getId).collect(Collectors.toSet()));
         return newFilm;
     }
+
+    public void remove(Long filmId) {
+        filmStorage.remove(filmId);
+    }
 }
