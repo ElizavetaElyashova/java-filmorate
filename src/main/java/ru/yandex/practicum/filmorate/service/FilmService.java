@@ -3,11 +3,8 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exception.DuplicateException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Event;
@@ -32,7 +29,6 @@ public class FilmService {
     private final DirectorDbStorage directorStorage;
     private final FeedDbStorage feedDbStorage;
     private final JdbcTemplate jdbc;
-    
 
     private String updateLikes = "UPDATE films SET likes = likes + ? WHERE id = ?";
     private String addUserLiked = "INSERT INTO likes VALUES(?, ?)";
@@ -103,9 +99,6 @@ public class FilmService {
                 genreDbStorage.findById(id);
             }
             film.setGenres(genreDbStorage.insertFilmGenres(film.getId(), genresIds));
-        }
-        if (film.getDirectors() != null) {
-
         }
         log.debug("Фильм {} добавлен", film);
         return film;

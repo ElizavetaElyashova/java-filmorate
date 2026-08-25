@@ -67,7 +67,7 @@ public class FilmController {
     public ResponseEntity<Collection<Film>> findAllDirectorsFilmsSorted(
             @PathVariable Long directorId,
             @RequestParam(required = false, defaultValue = "year") String sortBy
-    ){
+    ) {
         return ResponseEntity.ok(filmService.findAllDirectorsFilmsSorted(directorId, sortBy));
     }
 }

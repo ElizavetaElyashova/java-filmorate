@@ -48,7 +48,7 @@ public class DirectorDbStorage {
             JOIN directors AS d ON d.id = fd.director_id
             WHERE f.id = ?
             """;
-    private final String LIKES = "LIKES";
+    private static final String LIKES = "LIKES";
 
 
     public Director createDirector(String name) {
