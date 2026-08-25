@@ -57,6 +57,15 @@ public class FilmDbStorage implements FilmStorage {
             DELETE FROM film_director
             WHERE film_id = ?
             """;
+    private String findCommonFilmsQuery =
+            "SELECT f.id, f.name, f.description, f.release_date, f.duration, f.likes, f.rating_id, r.name AS mpa " +
+                    "FROM films f " +
+                    "JOIN ratings r ON f.rating_id = r.id " +
+                    "JOIN likes l1 ON l1.film_id = f.id " +
+                    "JOIN likes l2 ON l2.film_id = f.id " +
+                    "WHERE l1.user_id = ? AND l2.user_id = ? " +
+                    "ORDER BY f.likes DESC, f.id ASC;";
+
 
     @Override
     public Collection<Film> findAll() {
@@ -83,6 +92,11 @@ public class FilmDbStorage implements FilmStorage {
             log.warn("Фильм с id = {} не найден", id);
             throw new NotFoundException("Фильм с id = " + id + " не найден.");
         }
+    }
+
+    @Override
+    public List<Film> findCommonFilms(Long userId, Long friendId) {
+        return jdbc.query(findCommonFilmsQuery, filmMapper, userId, friendId);
     }
 
     @Override

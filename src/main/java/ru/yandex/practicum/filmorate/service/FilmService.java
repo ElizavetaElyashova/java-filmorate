@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.DuplicateException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Director;
+import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.*;
@@ -29,7 +30,9 @@ public class FilmService {
     private final UserStorage userStorage;
     private final GenreDbStorage genreDbStorage;
     private final DirectorDbStorage directorStorage;
+    private final FeedDbStorage feedDbStorage;
     private final JdbcTemplate jdbc;
+    
 
     private String updateLikes = "UPDATE films SET likes = likes + ? WHERE id = ?";
     private String addUserLiked = "INSERT INTO likes VALUES(?, ?)";
@@ -43,6 +46,10 @@ public class FilmService {
         } else {
             jdbc.update(updateLikes, 1, filmId);
             jdbc.update(addUserLiked, filmId, userId);
+            feedDbStorage.create(Event.builder()
+                    .userId(userId)
+                    .entityId(filmId)
+                    .build(), 1, 2);
             log.trace("Пользователь с id = {} ставит лайк фильму с id = {}", filmId, userId);
         }
     }
@@ -53,6 +60,10 @@ public class FilmService {
         if (film.getUsersLikedIds().contains(userId)) {
             jdbc.update(updateLikes, -1, filmId);
             jdbc.update(deleteUserLiked, filmId, userId);
+            feedDbStorage.create(Event.builder()
+                    .userId(userId)
+                    .entityId(filmId)
+                    .build(), 1, 1);
         } else {
             log.info("Пользователь с id = {} уже удалил лайк у фильма с id = {}", userId, filmId);
         }
@@ -64,6 +75,21 @@ public class FilmService {
                 .sorted(Comparator.comparingInt(Film::getLikes).reversed())
                 .limit(count)
                 .toList();
+    }
+
+    public List<Film> findCommonFilms(Long userId, Long friendId) {
+        // Проверяем существование пользователей
+        userStorage.findById(userId);
+        userStorage.findById(friendId);
+
+        List<Film> films = filmStorage.findCommonFilms(userId, friendId);
+
+        for (Film film : films) {
+            film.setGenres(genreDbStorage.findFilmGenres(film.getId()));
+        }
+
+        log.trace("Возвращает общие популярные фильмы в количестве {}", films.size());
+        return films;
     }
 
     public Film create(Film film) {
