@@ -24,7 +24,9 @@ public class MpaDbStorage {
     private static String findByIdQuery = "SELECT * FROM ratings WHERE id = ?;";
 
     public Collection<Mpa> findAll() {
-        return jdbc.query(findAllQuery, mapper).stream().sorted(Comparator.comparingInt(Mpa::getId)).toList();
+        return jdbc.query(findAllQuery, mapper).stream()
+                .sorted(Comparator.comparingInt(Mpa::getId))
+                .toList();
     }
 
     public Mpa findById(Integer id) {
