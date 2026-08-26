@@ -30,10 +30,7 @@ public class UserDbStorage implements UserStorage {
     private String findAllQuery = "SELECT * FROM users;";
     private String findByIdQuery = "SELECT * FROM users WHERE id = ?;";
     private String insertUserQuery = "INSERT INTO users(email, login, name, birthday) VALUES(?, ?, ?, ?);";
-    private String deleteUserQuery = "DELETE FROM friends WHERE user_id = ? OR friend_id = ?;\n" +
-            "DELETE FROM likes WHERE user_id = ?;\n" +
-            "DELETE FROM feed WHERE user_id = ?;\n" +
-            "DELETE FROM users WHERE id = ?;";
+    private String deleteUserQuery = "DELETE FROM users WHERE id = ?;";
     private String updateUserQuery = "UPDATE users SET email = ?, login = ?, name = ?, birthday = ?" +
             "WHERE id = ?";
     private String findFriendsQuery = "SELECT * FROM users WHERE id IN " +
@@ -116,7 +113,7 @@ public class UserDbStorage implements UserStorage {
     @Override
     public void remove(Long id) {
         findById(id);
-        jdbc.update(deleteUserQuery, id, id, id, id, id);
+        jdbc.update(deleteUserQuery, id);
         log.info("Пользователь с id = {} был удален.", id);
     }
 

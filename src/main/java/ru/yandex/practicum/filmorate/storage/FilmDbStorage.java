@@ -16,7 +16,10 @@ import ru.yandex.practicum.filmorate.storage.mappers.FilmRowMapper;
 
 import java.sql.PreparedStatement;
 import java.sql.Statement;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Repository
 @Qualifier("filmDbStorage")
@@ -40,10 +43,7 @@ public class FilmDbStorage implements FilmStorage {
             "VALUES(?, ?, ?, ?, ?, ?);";
     private String insertFilmDirectors = "INSERT INTO film_director(film_id, director_id) VALUES(?, ?);";
     private String updateFilmQuery = "UPDATE films SET name = ?, description = ?, release_date = ?, duration = ?, rating_id = ? WHERE id = ?";
-    private String deleteFilmQuery = "DELETE FROM likes WHERE film_id = ?;\n" +
-            "DELETE FROM film_genre WHERE film_id = ?;\n" +
-            "DELETE FROM feed WHERE entity_id = ? AND event_type_id = 1;\n" +
-            "DELETE FROM films WHERE ID = ?;";
+    private String deleteFilmQuery = "DELETE FROM films WHERE ID = ?;";
     private String insertFilmDirectorQuery = """
             INSERT INTO film_director (film_id, director_id)
             SELECT ?, ?
@@ -224,6 +224,9 @@ public class FilmDbStorage implements FilmStorage {
         if (newFilm.getGenres() == null) {
             newFilm.setGenres(oldFilm.getGenres());
         }
+        if (newFilm.getDirectors() == null || newFilm.getDirectors().isEmpty()) {
+            jdbc.update(deleteFilmDirectorsQuery, newFilm.getId());
+        }
         if (newFilm.getDirectors() != null && !newFilm.getDirectors().isEmpty()) {
             jdbc.update(deleteFilmDirectorsQuery, newFilm.getId());
             addFilmDirectors(newFilm.getId(), newFilm.getDirectors());
@@ -238,7 +241,7 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public void remove(Long id) {
         findById(id);
-        jdbc.update(deleteFilmQuery, id, id, id, id);
+        jdbc.update(deleteFilmQuery, id);
         log.debug("Фильм с id = {} удален", id);
     }
 

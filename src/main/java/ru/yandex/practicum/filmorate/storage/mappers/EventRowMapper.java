@@ -13,7 +13,7 @@ public class EventRowMapper implements RowMapper<Event> {
     @Override
     public Event mapRow(ResultSet rs, int rowNum) throws SQLException {
         return Event.builder()
-                .id(rs.getLong("event_id"))
+                .eventId(rs.getLong("event_id"))
                 .entityId(rs.getLong("entity_id"))
                 .userId(rs.getLong("user_id"))
                 .timestamp(rs.getObject("timestamp", Instant.class).toEpochMilli())

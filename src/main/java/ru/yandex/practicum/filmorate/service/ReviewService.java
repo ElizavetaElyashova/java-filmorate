@@ -54,7 +54,6 @@ public class ReviewService {
         feedDbStorage.create(Event.builder()
                 .userId(newReview.getUserId())
                 .entityId(newReview.getReviewId())
-
                 .build(), 2, 3);
         return newReview;
     }
@@ -69,16 +68,22 @@ public class ReviewService {
     }
 
     public void addReaction(Long reviewId, Long userId, boolean userLiked) {
-        Review review = reviewDbStorage.findById(reviewId);
+        Review review;
         userDbStorage.findById(userId);
-        Collection<Long> usersLiked = reviewDbStorage.findUsersReacted(reviewId, userLiked);
-        if (!usersLiked.contains(userId)) {
+        Collection<Long> usersReacted = reviewDbStorage.findUsersReacted(reviewId, userLiked);
+        if (!usersReacted.contains(userId)) {
             review = removeReaction(reviewId, userId, !userLiked);
             int i = userLiked ? 1 : -1;
             review.setUseful(review.getUseful() + i);
-            update(review);
+            reviewDbStorage.updateUseful(review);
             reviewDbStorage.addUserReaction(reviewId, userId, userLiked);
         }
+//        if (userLiked) {
+//            feedDbStorage.create(Event.builder()
+//                    .userId(userId)
+//                    .entityId(reviewId)
+//                    .build(), 1, 2);
+//        }
     }
 
 
@@ -89,9 +94,15 @@ public class ReviewService {
         if (usersReacted.contains(userId)) {
             int i = userLiked ? 1 : -1;
             review.setUseful(review.getUseful() - i);
-            review = update(review);
+            reviewDbStorage.updateUseful(review);
             reviewDbStorage.removeUserReacted(reviewId, userId, userLiked);
         }
+//        if (userLiked) {
+//            feedDbStorage.create(Event.builder()
+//                    .userId(userId)
+//                    .entityId(reviewId)
+//                    .build(), 1, 1);
+//        }
         return review;
     }
 

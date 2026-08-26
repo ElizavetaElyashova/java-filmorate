@@ -55,6 +55,7 @@ public class UserService {
     }
 
     public Collection<Event> findFeedByUserId(long id) {
+        userStorage.findById(id);
         return feedDbStorage.findFeedByUserId(id);
     }
 

@@ -42,12 +42,12 @@ public class FilmService {
         } else {
             jdbc.update(updateLikes, 1, filmId);
             jdbc.update(addUserLiked, filmId, userId);
-            feedDbStorage.create(Event.builder()
-                    .userId(userId)
-                    .entityId(filmId)
-                    .build(), 1, 2);
             log.trace("Пользователь с id = {} ставит лайк фильму с id = {}", filmId, userId);
         }
+        feedDbStorage.create(Event.builder()
+                .userId(userId)
+                .entityId(filmId)
+                .build(), 1, 2);
     }
 
     public void deleteLike(Long filmId, Long userId) {
@@ -56,13 +56,13 @@ public class FilmService {
         if (film.getUsersLikedIds().contains(userId)) {
             jdbc.update(updateLikes, -1, filmId);
             jdbc.update(deleteUserLiked, filmId, userId);
-            feedDbStorage.create(Event.builder()
-                    .userId(userId)
-                    .entityId(filmId)
-                    .build(), 1, 1);
         } else {
             log.info("Пользователь с id = {} уже удалил лайк у фильма с id = {}", userId, filmId);
         }
+        feedDbStorage.create(Event.builder()
+                .userId(userId)
+                .entityId(filmId)
+                .build(), 1, 1);
     }
 
     public List<Film> findPopular(int count, Long genreId, Integer year) {
@@ -94,6 +94,7 @@ public class FilmService {
 
         for (Film film : films) {
             film.setGenres(genreDbStorage.findFilmGenres(film.getId()));
+            film.setDirectors(directorStorage.findAllDirectorsByFilmId(film.getId()));
         }
         return films;
     }
@@ -138,7 +139,7 @@ public class FilmService {
             genreDbStorage.findById(genre.getId());
         }
         newFilm = filmStorage.update(newFilm);
-        genreDbStorage.updateFilmGenres(newFilm.getId(), newFilm.getGenres().stream().map(Genre::getId).collect(Collectors.toSet()));
+        newFilm.setGenres(genreDbStorage.updateFilmGenres(newFilm.getId(), newFilm.getGenres().stream().map(Genre::getId).collect(Collectors.toSet())));
         return newFilm;
     }
 

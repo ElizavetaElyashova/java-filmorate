@@ -19,7 +19,7 @@ public class FeedDbStorage {
     @Autowired
     private EventRowMapper eventMapper;
 
-    private String findFeedByUserIdQuery = "SELECT f.event_id, f.entity_id, f.user_id, f.timestamp," +
+    private String findFeedByUserIdQuery = "SELECT f.event_id, f.entity_id, f.user_id, f.timestamp, " +
             "e.name AS event_type, o.name AS operation " +
             "FROM feed f " +
             "JOIN event_types AS e ON f.event_type_id = e.id " +
