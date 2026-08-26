@@ -66,6 +66,31 @@ public class FilmDbStorage implements FilmStorage {
                     "JOIN likes l2 ON l2.film_id = f.id " +
                     "WHERE l1.user_id = ? AND l2.user_id = ? " +
                     "ORDER BY f.likes DESC, f.id ASC;";
+    private final String findPopularByGenreQuery =
+            "SELECT DISTINCT f.id, f.name, f.description, f.release_date, f.duration, f.likes, f.rating_id, r.name AS mpa " +
+                    "FROM films f " +
+                    "JOIN ratings r ON f.rating_id = r.id " +
+                    "JOIN film_genre fg ON fg.film_id = f.id " +
+                    "WHERE fg.genre_id = ? " +
+                    "ORDER BY f.likes DESC, f.id ASC " +
+                    "LIMIT ?;";
+
+    private final String findPopularByYearQuery =
+            "SELECT DISTINCT f.id, f.name, f.description, f.release_date, f.duration, f.likes, f.rating_id, r.name AS mpa " +
+                    "FROM films f " +
+                    "JOIN ratings r ON f.rating_id = r.id " +
+                    "WHERE YEAR(f.release_date) = ? " +
+                    "ORDER BY f.likes DESC, f.id ASC " +
+                    "LIMIT ?;";
+
+    private final String findPopularByGenreAndYearQuery =
+            "SELECT DISTINCT f.id, f.name, f.description, f.release_date, f.duration, f.likes, f.rating_id, r.name AS mpa " +
+                    "FROM films f " +
+                    "JOIN ratings r ON f.rating_id = r.id " +
+                    "JOIN film_genre fg ON fg.film_id = f.id " +
+                    "WHERE fg.genre_id = ? AND YEAR(f.release_date) = ? " +
+                    "ORDER BY f.likes DESC, f.id ASC " +
+                    "LIMIT ?;";
 
     private String findFilmByTitleAndByDirector = "SELECT f.id, f.name, f.description, f.release_date, f.duration, f.likes, f.rating_id, r.name AS mpa " +
             "FROM films f " +
@@ -121,6 +146,21 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public List<Film> findCommonFilms(Long userId, Long friendId) {
         return jdbc.query(findCommonFilmsQuery, filmMapper, userId, friendId);
+    }
+
+    @Override
+    public List<Film> findPopularByGenre(Long genreId, int count) {
+        return jdbc.query(findPopularByGenreQuery, filmMapper, genreId.intValue(), count);
+    }
+
+    @Override
+    public List<Film> findPopularByYear(int year, int count) {
+        return jdbc.query(findPopularByYearQuery, filmMapper, year, count);
+    }
+
+    @Override
+    public List<Film> findPopularByGenreAndYear(Long genreId, int year, int count) {
+        return jdbc.query(findPopularByGenreAndYearQuery, filmMapper, genreId.intValue(), year, count);
     }
 
     @Override

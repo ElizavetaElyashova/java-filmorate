@@ -14,6 +14,12 @@ public interface FilmStorage {
 
     List<Film> findCommonFilms(Long userId, Long friendId);
 
+    List<Film> findPopularByGenre(Long genreId, int count);
+
+    List<Film> findPopularByYear(int year, int count);
+
+    List<Film> findPopularByGenreAndYear(Long genreId, int year, int count);
+
     Film create(@RequestBody @Valid Film film);
 
     Film update(@RequestBody @Valid Film newFilm);

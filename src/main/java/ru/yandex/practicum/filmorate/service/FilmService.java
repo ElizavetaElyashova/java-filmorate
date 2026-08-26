@@ -65,12 +65,37 @@ public class FilmService {
         }
     }
 
-    public List<Film> findPopular(int count) {
-        log.trace("Возвращает популярные фильмы в количестве {}", count);
-        return filmStorage.findAll().stream()
-                .sorted(Comparator.comparingInt(Film::getLikes).reversed())
-                .limit(count)
-                .toList();
+    public List<Film> findPopular(int count, Long genreId, Integer year) {
+        boolean hasGenre = genreId != null;
+        boolean hasYear = year != null;
+
+        List<Film> films;
+
+        if (!hasGenre && !hasYear) {
+            // /films/popular?count=...
+            films = filmStorage.findAll().stream()
+                    .sorted(Comparator.comparingInt(Film::getLikes).reversed())
+                    .limit(count)
+                    .toList();
+            return films;
+        }
+
+        if (hasGenre && !hasYear) {
+            // /films/popular?count=...&genreId=...
+            films = filmStorage.findPopularByGenre(genreId, count);
+        } else if (!hasGenre && hasYear) {
+            // /films/popular?count=...&year=...
+            films = filmStorage.findPopularByYear(year, count);
+        } else {
+            // /films/popular?count=...&genreId=...&year=...
+            genreDbStorage.findById(genreId.intValue());
+            films = filmStorage.findPopularByGenreAndYear(genreId, year, count);
+        }
+
+        for (Film film : films) {
+            film.setGenres(genreDbStorage.findFilmGenres(film.getId()));
+        }
+        return films;
     }
 
     public List<Film> findCommonFilms(Long userId, Long friendId) {
