@@ -25,7 +25,6 @@ public class FilmService {
     @Qualifier("filmDbStorage")
     private FilmStorage filmStorage;
     @Qualifier("userDbStorage")
-    private static final String ERROR_WRONG_NUM_OF_ARGS = "GET /films/popular?count={limit}&genreId={genreId}&year={year} OR /films/popular?count={limit}";
     private UserStorage userStorage;
     private GenreDbStorage genreDbStorage;
     private FeedDbStorage feedDbStorage;
