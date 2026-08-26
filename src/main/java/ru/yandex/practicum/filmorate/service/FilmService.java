@@ -117,6 +117,10 @@ public class FilmService {
         return newFilm;
     }
 
+    public void remove(Long filmId) {
+        filmStorage.remove(filmId);
+    }
+
     private boolean isDirectorExist(Long id) {
         return directorStorage.findAllDirectors().stream()
                 .map(Director::getId)

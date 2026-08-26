@@ -67,6 +67,11 @@ public class UserController {
         return userService.getUserStorage().update(newUser);
     }
 
+    @DeleteMapping("/{userId}")
+    public void remove(@PathVariable("userId") Long id) {
+        userService.remove(id);
+    }
+
     @PutMapping("/{id}/friends/{friendId}")
     public void addFriend(@PathVariable Long id, @PathVariable Long friendId) {
         userService.addFriend(id, friendId);

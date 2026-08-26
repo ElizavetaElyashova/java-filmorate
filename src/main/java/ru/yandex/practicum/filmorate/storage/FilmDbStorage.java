@@ -42,6 +42,7 @@ public class FilmDbStorage implements FilmStorage {
     private String updateFilmQuery = "UPDATE films SET name = ?, description = ?, release_date = ?, duration = ?, rating_id = ? WHERE id = ?";
     private String deleteFilmQuery = "DELETE FROM likes WHERE film_id = ?;\n" +
             "DELETE FROM film_genre WHERE film_id = ?;\n" +
+            "DELETE FROM feed WHERE entity_id = ? AND event_type_id = 1;\n" +
             "DELETE FROM films WHERE ID = ?;";
     private String insertFilmDirectorQuery = """
             INSERT INTO film_director (film_id, director_id)
@@ -197,7 +198,7 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public void remove(Long id) {
         findById(id);
-        jdbc.update(deleteFilmQuery, id, id, id);
+        jdbc.update(deleteFilmQuery, id, id, id, id);
         log.debug("Фильм с id = {} удален", id);
     }
 

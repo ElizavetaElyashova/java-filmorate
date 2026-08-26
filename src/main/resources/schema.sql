@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS reviews (
 
 CREATE TABLE IF NOT EXISTS reviews_reactions (
     review_id long REFERENCES reviews(review_id),
-    user_id long REFERENCES users(id),
+    user_id long REFERENCES users(id) ON DELETE CASCADE,
     user_liked boolean,
     PRIMARY KEY(review_id, user_id)
 );
@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS directors (
 );
 
 CREATE TABLE IF NOT EXISTS film_director (
-  film_id long REFERENCES films(id),
+  film_id long REFERENCES films(id) ON DELETE CASCADE,
   director_id long REFERENCES directors(id),
   PRIMARY KEY (film_id, director_id)
 );
