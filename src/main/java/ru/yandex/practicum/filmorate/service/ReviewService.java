@@ -78,12 +78,6 @@ public class ReviewService {
             reviewDbStorage.updateUseful(review);
             reviewDbStorage.addUserReaction(reviewId, userId, userLiked);
         }
-//        if (userLiked) {
-//            feedDbStorage.create(Event.builder()
-//                    .userId(userId)
-//                    .entityId(reviewId)
-//                    .build(), 1, 2);
-//        }
     }
 
 
@@ -97,12 +91,6 @@ public class ReviewService {
             reviewDbStorage.updateUseful(review);
             reviewDbStorage.removeUserReacted(reviewId, userId, userLiked);
         }
-//        if (userLiked) {
-//            feedDbStorage.create(Event.builder()
-//                    .userId(userId)
-//                    .entityId(reviewId)
-//                    .build(), 1, 1);
-//        }
         return review;
     }
 
