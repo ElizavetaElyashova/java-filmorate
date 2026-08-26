@@ -66,6 +66,29 @@ public class FilmDbStorage implements FilmStorage {
                     "WHERE l1.user_id = ? AND l2.user_id = ? " +
                     "ORDER BY f.likes DESC, f.id ASC;";
 
+    private String findFilmByTitleAndByDirector = "SELECT f.id, f.name, f.description, f.release_date, f.duration, f.likes, f.rating_id, r.name AS mpa " +
+            "FROM films f " +
+            "JOIN ratings r ON f.rating_id = r.id " +
+            "LEFT JOIN film_director fd ON f.id = fd.film_id " +
+            "LEFT JOIN directors d ON fd.director_id = d.id " +
+            "WHERE (LOWER(f.name) LIKE ? OR LOWER(d.name) LIKE ?) " +
+            "ORDER BY f.likes DESC, f.id ASC;";
+
+    private String findFilmByTitle = "SELECT f.id, f.name, f.description, f.release_date, f.duration, f.likes, f.rating_id, r.name AS mpa " +
+            "FROM films f " +
+            "JOIN ratings r ON f.rating_id = r.id " +
+            "LEFT JOIN film_director fd ON f.id = fd.film_id " +
+            "LEFT JOIN directors d ON fd.director_id = d.id " +
+            "WHERE LOWER(f.name) LIKE ? " +
+            "ORDER BY f.likes DESC, f.id ASC;";
+
+    private String findFilmByDirector = "SELECT f.id, f.name, f.description, f.release_date, f.duration, f.likes, f.rating_id, r.name AS mpa " +
+            "FROM films f " +
+            "JOIN ratings r ON f.rating_id = r.id " +
+            "LEFT JOIN film_director fd ON f.id = fd.film_id " +
+            "LEFT JOIN directors d ON fd.director_id = d.id " +
+            "WHERE LOWER(d.name) LIKE ? " +
+            "ORDER BY f.likes DESC, f.id ASC;";
 
     @Override
     public Collection<Film> findAll() {
@@ -178,4 +201,43 @@ public class FilmDbStorage implements FilmStorage {
         log.debug("Фильм с id = {} удален", id);
     }
 
+    @Override
+    public List<Film> search(String query, String by) {
+        log.info("Поиск фильмов: query='{}', by='{}'", query, by);
+
+        if (query == null || query.isBlank()) {
+            log.warn("Пустой поисковый запрос");
+            return List.of();
+        }
+
+        String searchPattern = "%" + query.toLowerCase() + "%";
+        Set<String> bySet = Set.of(by.toLowerCase().split(","));
+
+        boolean byTitle = bySet.contains("title");
+        boolean byDirector = bySet.contains("director");
+
+        if (!byTitle && !byDirector) {
+            log.warn("Некорректный параметр 'by': {}", by);
+            throw new IllegalArgumentException("Параметр 'by' должен содержать 'title', 'director' или оба значения через запятую.");
+        }
+
+        List<Film> films;
+
+        if (byTitle && byDirector) {
+            films = jdbc.query(findFilmByTitleAndByDirector, filmMapper, searchPattern, searchPattern);
+        } else if (byTitle) {
+            films = jdbc.query(findFilmByTitle, filmMapper, searchPattern);
+        } else {
+            films = jdbc.query(findFilmByDirector, filmMapper, searchPattern);
+        }
+
+        // Заполняем дополнительные данные для каждого фильма
+        for (Film film : films) {
+            film.setGenres(genreDbStorage.findFilmGenres(film.getId()));
+            film.setDirectors(directorDbStorage.findAllDirectorsByFilmId(film.getId()));
+        }
+
+        log.debug("Поиск вернул {} фильмов", films.size());
+        return films;
+    }
 }

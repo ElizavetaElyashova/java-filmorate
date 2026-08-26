@@ -129,4 +129,8 @@ public class FilmService {
         }
         throw new NotFoundException("Отсутствует режиссер с id = " + directorId.toString());
     }
+
+    public List<Film> search(String query, String by) {
+        return filmStorage.search(query, by);
+    }
 }
