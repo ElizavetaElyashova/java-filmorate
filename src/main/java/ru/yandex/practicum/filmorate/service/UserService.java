@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.FeedDbStorage;
@@ -27,6 +28,7 @@ public class UserService {
         this.feedDbStorage = feedDbStorage;
     }
 
+    @Transactional
     public void addFriend(Long id, Long friendId) {
         userStorage.addFriend(id, friendId);
         feedDbStorage.create(Event.builder()
@@ -36,6 +38,7 @@ public class UserService {
         log.trace("Пользователь с id = {} добавляет в друзья пользователя с id = {}", id, friendId);
     }
 
+    @Transactional
     public void deleteFriend(Long id, Long friendId) {
         userStorage.deleteFriend(id, friendId);
         feedDbStorage.create(Event.builder()
@@ -61,5 +64,25 @@ public class UserService {
 
     public void remove(Long id) {
         userStorage.remove(id);
+    }
+
+    public Collection<User> findAll() {
+        return userStorage.findAll();
+    }
+
+    public User findById(Long id) {
+        return userStorage.findById(id);
+    }
+
+    public List<User> findFriends(Long id) {
+        return userStorage.findFriends(id);
+    }
+
+    public User create(User user) {
+        return userStorage.create(user);
+    }
+
+    public User update(User newUser) {
+        return userStorage.update(newUser);
     }
 }

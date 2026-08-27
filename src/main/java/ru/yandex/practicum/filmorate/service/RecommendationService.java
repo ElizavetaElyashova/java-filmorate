@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.storage.DirectorDbStorage;
 import ru.yandex.practicum.filmorate.storage.GenreDbStorage;
 import ru.yandex.practicum.filmorate.storage.RecommendationStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
@@ -19,15 +20,18 @@ public class RecommendationService {
     private final RecommendationStorage recommendationStorage;
     private final UserStorage userStorage;
     private final GenreDbStorage genreDbStorage;
+    private final DirectorDbStorage directorStorage;
 
     public RecommendationService(
             @Qualifier("recommendationDbStorage") RecommendationStorage recommendationStorage,
             @Qualifier("userDbStorage") UserStorage userStorage,
-            GenreDbStorage genreDbStorage
+            GenreDbStorage genreDbStorage,
+            DirectorDbStorage directorStorage
     ) {
         this.recommendationStorage = recommendationStorage;
         this.userStorage = userStorage;
         this.genreDbStorage = genreDbStorage;
+        this.directorStorage = directorStorage;
     }
 
     public List<Film> getRecommendations(Long userId) {
@@ -37,6 +41,7 @@ public class RecommendationService {
 
         for (Film film : films) {
             film.setGenres(genreDbStorage.findFilmGenres(film.getId()));
+            film.setDirectors(directorStorage.findAllDirectorsByFilmId(film.getId()));
         }
 
         log.trace("Recommendations for userId={}: {}", userId, films.size());

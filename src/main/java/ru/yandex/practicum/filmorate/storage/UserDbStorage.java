@@ -37,6 +37,8 @@ public class UserDbStorage implements UserStorage {
             "(SELECT friend_id FROM friends WHERE user_id = ?);";
     private String addFriendQuery = "INSERT INTO friends(user_id, friend_id) VALUES(?, ?);";
     private String deleteFriendQuery = "DELETE FROM friends WHERE user_id = ? AND friend_id = ?;";
+    private String addUserLiked = "INSERT INTO likes VALUES(?, ?)";
+    private String deleteUserLiked = "DELETE FROM likes WHERE film_id = ? AND user_id = ?";
 
 
     @Override
@@ -129,5 +131,13 @@ public class UserDbStorage implements UserStorage {
         findById(id);
         findById(friendId);
         jdbc.update(deleteFriendQuery, id, friendId);
+    }
+
+    public void addUserLiked(Long filmId, Long userId) {
+        jdbc.update(addUserLiked, filmId, userId);
+    }
+
+    public void deleteUserLiked(Long filmId, Long userId) {
+        jdbc.update(deleteUserLiked, filmId, userId);
     }
 }

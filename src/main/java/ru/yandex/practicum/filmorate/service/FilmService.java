@@ -1,10 +1,9 @@
 package ru.yandex.practicum.filmorate.service;
 
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Event;
@@ -12,36 +11,29 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.*;
 
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class FilmService {
-    @Getter
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
     private final GenreDbStorage genreDbStorage;
     private final DirectorDbStorage directorStorage;
     private final FeedDbStorage feedDbStorage;
-    private final JdbcTemplate jdbc;
+    private final MpaDbStorage mpaDbStorage;
 
-    private String updateLikes = "UPDATE films SET likes = likes + ? WHERE id = ?";
-    private String addUserLiked = "INSERT INTO likes VALUES(?, ?)";
-    private String deleteUserLiked = "DELETE FROM likes WHERE film_id = ? AND user_id = ?";
-
+    @Transactional
     public void addLike(Long filmId, Long userId) {
         userStorage.findById(userId);
         Film film = filmStorage.findById(filmId);
         if (film.getUsersLikedIds().contains(userId)) {
             log.info("Пользователь с id = {} уже поставил лайк фильму с id = {}", userId, filmId);
         } else {
-            jdbc.update(updateLikes, 1, filmId);
-            jdbc.update(addUserLiked, filmId, userId);
+            filmStorage.updateFilmLikes(filmId, 1);
+            userStorage.addUserLiked(filmId, userId);
             log.trace("Пользователь с id = {} ставит лайк фильму с id = {}", filmId, userId);
         }
         feedDbStorage.create(Event.builder()
@@ -50,12 +42,13 @@ public class FilmService {
                 .build(), 1, 2);
     }
 
+    @Transactional
     public void deleteLike(Long filmId, Long userId) {
         userStorage.findById(userId);
         Film film = filmStorage.findById(filmId);
         if (film.getUsersLikedIds().contains(userId)) {
-            jdbc.update(updateLikes, -1, filmId);
-            jdbc.update(deleteUserLiked, filmId, userId);
+            filmStorage.updateFilmLikes(filmId, -1);
+            userStorage.deleteUserLiked(filmId, userId);
         } else {
             log.info("Пользователь с id = {} уже удалил лайк у фильма с id = {}", userId, filmId);
         }
@@ -73,7 +66,7 @@ public class FilmService {
 
         if (!hasGenre && !hasYear) {
             // /films/popular?count=...
-            films = filmStorage.findAll().stream()
+            films = findAll().stream()
                     .sorted(Comparator.comparingInt(Film::getLikes).reversed())
                     .limit(count)
                     .toList();
@@ -108,12 +101,14 @@ public class FilmService {
 
         for (Film film : films) {
             film.setGenres(genreDbStorage.findFilmGenres(film.getId()));
+            film.setDirectors(directorStorage.findAllDirectorsByFilmId(film.getId()));
         }
 
         log.trace("Возвращает общие популярные фильмы в количестве {}", films.size());
         return films;
     }
 
+    @Transactional
     public Film create(Film film) {
         film = filmStorage.create(film);
         if (film.getGenres() != null) {
@@ -126,20 +121,24 @@ public class FilmService {
             }
             film.setGenres(genreDbStorage.insertFilmGenres(film.getId(), genresIds));
         }
+        film.setMpa(mpaDbStorage.findById(film.getMpa().getId()));
+        film.setDirectors(directorStorage.findAllDirectorsByFilmId(film.getId()));
         log.debug("Фильм {} добавлен", film);
         return film;
     }
 
     public Film update(Film newFilm) {
-        Film oldFilm = filmStorage.findById(newFilm.getId());
+        Film oldFilm = findById(newFilm.getId());
         if (newFilm.getGenres() == null) {
             newFilm.setGenres(oldFilm.getGenres());
+        } else {
+            for (Genre genre : newFilm.getGenres()) {
+                genreDbStorage.findById(genre.getId());
+            }
+            newFilm.setGenres(genreDbStorage.updateFilmGenres(newFilm.getId(), newFilm.getGenres().stream().map(Genre::getId).collect(Collectors.toSet())));
         }
-        for (Genre genre : newFilm.getGenres()) {
-            genreDbStorage.findById(genre.getId());
-        }
+
         newFilm = filmStorage.update(newFilm);
-        newFilm.setGenres(genreDbStorage.updateFilmGenres(newFilm.getId(), newFilm.getGenres().stream().map(Genre::getId).collect(Collectors.toSet())));
         return newFilm;
     }
 
@@ -155,12 +154,37 @@ public class FilmService {
 
     public List<Film> findAllDirectorsFilmsSorted(Long directorId, String sortType) {
         if (isDirectorExist(directorId)) {
-            return directorStorage.findAllDirectorsFilmsSorted(directorId, sortType);
+            List<Film> films = directorStorage.findAllDirectorsFilmsSorted(directorId, sortType);
+            for (Film film : films) {
+                film.setGenres(genreDbStorage.findFilmGenres(film.getId()));
+            }
+            return films;
         }
         throw new NotFoundException("Отсутствует режиссер с id = " + directorId.toString());
     }
 
     public List<Film> search(String query, String by) {
-        return filmStorage.search(query, by);
+        List<Film> films = filmStorage.search(query, by);
+        for (Film film : films) {
+            film.setGenres(genreDbStorage.findFilmGenres(film.getId()));
+            film.setDirectors(directorStorage.findAllDirectorsByFilmId(film.getId()));
+        }
+        return films;
+    }
+
+    public Film findById(Long id) {
+        Film film = filmStorage.findById(id);
+        film.setGenres(genreDbStorage.findFilmGenres(id));
+        film.setDirectors(directorStorage.findAllDirectorsByFilmId(id));
+        return film;
+    }
+
+    public Collection<Film> findAll() {
+        Collection<Film> films = filmStorage.findAll();
+        for (Film film : films) {
+            film.setGenres(genreDbStorage.findFilmGenres(film.getId()));
+            film.setDirectors(directorStorage.findAllDirectorsByFilmId(film.getId()));
+        }
+        return films;
     }
 }

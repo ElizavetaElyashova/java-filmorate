@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.storage.FeedDbStorage;
@@ -30,6 +31,7 @@ public class ReviewService {
         return reviewDbStorage.findById(id);
     }
 
+    @Transactional
     public Review create(Review review) {
         filmDbStorage.findById(review.getFilmId());
         userDbStorage.findById(review.getUserId());
@@ -43,6 +45,7 @@ public class ReviewService {
         return review;
     }
 
+    @Transactional
     public Review update(Review newReview) {
         if (newReview.getFilmId() != null) {
             filmDbStorage.findById(newReview.getFilmId());
@@ -67,6 +70,7 @@ public class ReviewService {
         }
     }
 
+    @Transactional
     public void addReaction(Long reviewId, Long userId, boolean userLiked) {
         Review review;
         userDbStorage.findById(userId);
@@ -80,7 +84,7 @@ public class ReviewService {
         }
     }
 
-
+    @Transactional
     public Review removeReaction(Long reviewId, Long userId, boolean userLiked) {
         Review review = reviewDbStorage.findById(reviewId);
         userDbStorage.findById(userId);
@@ -94,6 +98,7 @@ public class ReviewService {
         return review;
     }
 
+    @Transactional
     public void removeReview(Long id) {
         Review review = reviewDbStorage.findById(id);
         reviewDbStorage.removeReview(id);

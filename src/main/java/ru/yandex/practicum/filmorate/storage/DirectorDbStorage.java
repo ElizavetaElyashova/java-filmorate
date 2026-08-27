@@ -25,7 +25,6 @@ public class DirectorDbStorage {
     private final JdbcTemplate jdbc;
     private final DirectorRowMapper directorMapper;
     private final FilmRowMapper filmMapper;
-    private final GenreDbStorage genreDbStorage;
 
 
     private String insertDirector = "INSERT INTO directors(name) VALUES(?)";
@@ -97,7 +96,6 @@ public class DirectorDbStorage {
     public List<Film> findAllDirectorsFilmsSorted(Long directorId, String sortType) {
         List<Film> films = jdbc.query(findAllDirectorsFilms, filmMapper, directorId);
         for (Film film : films) {
-            film.setGenres(genreDbStorage.findFilmGenres(film.getId()));
             film.setDirectors(findAllDirectorsByFilmId(film.getId()));
         }
         if (sortType.equalsIgnoreCase(LIKES)) {

@@ -27,4 +27,6 @@ public interface FilmStorage {
     void remove(Long id);
 
     List<Film> search(String query, String by);
+
+    void updateFilmLikes(Long id, int like);
 }

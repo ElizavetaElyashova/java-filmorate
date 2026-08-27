@@ -10,16 +10,11 @@ import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.storage.mappers.DirectorRowMapper;
 import ru.yandex.practicum.filmorate.storage.mappers.FilmRowMapper;
 
 import java.sql.PreparedStatement;
 import java.sql.Statement;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Repository
 @Qualifier("filmDbStorage")
@@ -28,10 +23,6 @@ import java.util.Set;
 public class FilmDbStorage implements FilmStorage {
     private final JdbcTemplate jdbc;
     private final FilmRowMapper filmMapper;
-    private final DirectorRowMapper directorMapper;
-    private final MpaDbStorage mpaDbStorage;
-    private final GenreDbStorage genreDbStorage;
-    private final DirectorDbStorage directorDbStorage;
 
 
     private String findByIdQuery = "SELECT f.id, f.name, f.description, f.release_date, f.duration, f.likes, f.rating_id, r.name AS mpa " +
@@ -92,37 +83,33 @@ public class FilmDbStorage implements FilmStorage {
                     "ORDER BY f.likes DESC, f.id ASC " +
                     "LIMIT ?;";
 
-    private String findFilmByTitleAndByDirector = "SELECT f.id, f.name, f.description, f.release_date, f.duration, f.likes, f.rating_id, r.name AS mpa " +
-            "FROM films f " +
-            "JOIN ratings r ON f.rating_id = r.id " +
-            "LEFT JOIN film_director fd ON f.id = fd.film_id " +
-            "LEFT JOIN directors d ON fd.director_id = d.id " +
-            "WHERE (LOWER(f.name) LIKE ? OR LOWER(d.name) LIKE ?) " +
-            "ORDER BY f.likes DESC, f.id ASC;";
 
     private String findFilmByTitle = "SELECT f.id, f.name, f.description, f.release_date, f.duration, f.likes, f.rating_id, r.name AS mpa " +
             "FROM films f " +
             "JOIN ratings r ON f.rating_id = r.id " +
             "LEFT JOIN film_director fd ON f.id = fd.film_id " +
             "LEFT JOIN directors d ON fd.director_id = d.id " +
-            "WHERE LOWER(f.name) LIKE ? " +
-            "ORDER BY f.likes DESC, f.id ASC;";
+            "WHERE LOWER(f.name) LIKE ? ;";
 
     private String findFilmByDirector = "SELECT f.id, f.name, f.description, f.release_date, f.duration, f.likes, f.rating_id, r.name AS mpa " +
             "FROM films f " +
             "JOIN ratings r ON f.rating_id = r.id " +
             "LEFT JOIN film_director fd ON f.id = fd.film_id " +
             "LEFT JOIN directors d ON fd.director_id = d.id " +
-            "WHERE LOWER(d.name) LIKE ? " +
-            "ORDER BY f.likes DESC, f.id ASC;";
+            "WHERE LOWER(d.name) LIKE ? ;";
+
+    private String findFilmByDescription = "SELECT f.id, f.name, f.description, f.release_date, f.duration, f.likes, f.rating_id, r.name AS mpa " +
+            "FROM films f " +
+            "JOIN ratings r ON f.rating_id = r.id " +
+            "LEFT JOIN film_director fd ON f.id = fd.film_id " +
+            "LEFT JOIN directors d ON fd.director_id = d.id " +
+            "WHERE LOWER(f.description) LIKE ? ;";
+
+    private String updateLikes = "UPDATE films SET likes = likes + ? WHERE id = ?";
 
     @Override
     public Collection<Film> findAll() {
         List<Film> films = jdbc.query(findAllQuery, filmMapper);
-        for (Film film : films) {
-            film.setGenres(genreDbStorage.findFilmGenres(film.getId()));
-            film.setDirectors(directorDbStorage.findAllDirectorsByFilmId(film.getId()));
-        }
         return films;
     }
 
@@ -130,11 +117,8 @@ public class FilmDbStorage implements FilmStorage {
     public Film findById(Long id) {
         try {
             Film film = jdbc.queryForObject(findByIdQuery, filmMapper, id);
-            List<Genre> genres = genreDbStorage.findFilmGenres(id);
             Set<Long> userLikedIds = new HashSet<>(jdbc.queryForList(findUsersLiked, Long.class, id));
-            film.setGenres(genres);
             film.setUsersLikedIds(userLikedIds);
-            film.setDirectors(directorDbStorage.findAllDirectorsByFilmId(id));
             log.trace("Фильм с id = {} найден", id);
             return film;
         } catch (DataAccessException e) {
@@ -166,7 +150,6 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public Film create(Film film) {
         GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
-        film.setMpa(mpaDbStorage.findById(film.getMpa().getId()));
         jdbc.update(con -> {
             PreparedStatement ps = con.prepareStatement(insertFilmQuery, Statement.RETURN_GENERATED_KEYS);
             ps.setObject(1, film.getName());
@@ -183,7 +166,6 @@ public class FilmDbStorage implements FilmStorage {
         if (film.getDirectors() != null) {
             addFilmDirectors(film.getId(), film.getDirectors());
         }
-        film.setDirectors(directorDbStorage.findAllDirectorsByFilmId(film.getId()));
 
         return film;
     }
@@ -259,29 +241,32 @@ public class FilmDbStorage implements FilmStorage {
 
         boolean byTitle = bySet.contains("title");
         boolean byDirector = bySet.contains("director");
+        boolean byDescription = bySet.contains("description");
 
         if (!byTitle && !byDirector) {
             log.warn("Некорректный параметр 'by': {}", by);
             throw new IllegalArgumentException("Параметр 'by' должен содержать 'title', 'director' или оба значения через запятую.");
         }
 
-        List<Film> films;
+        List<Film> films = new ArrayList<>();
 
-        if (byTitle && byDirector) {
-            films = jdbc.query(findFilmByTitleAndByDirector, filmMapper, searchPattern, searchPattern);
-        } else if (byTitle) {
-            films = jdbc.query(findFilmByTitle, filmMapper, searchPattern);
-        } else {
-            films = jdbc.query(findFilmByDirector, filmMapper, searchPattern);
+        if (byTitle) {
+            films.addAll(jdbc.query(findFilmByTitle, filmMapper, searchPattern));
         }
 
-        // Заполняем дополнительные данные для каждого фильма
-        for (Film film : films) {
-            film.setGenres(genreDbStorage.findFilmGenres(film.getId()));
-            film.setDirectors(directorDbStorage.findAllDirectorsByFilmId(film.getId()));
+        if (byDirector) {
+            films.addAll(jdbc.query(findFilmByDirector, filmMapper, searchPattern));
+        }
+
+        if (byDescription) {
+            films.addAll(jdbc.query(findFilmByDescription, filmMapper, searchPattern));
         }
 
         log.debug("Поиск вернул {} фильмов", films.size());
-        return films;
+        return films.stream().sorted(Comparator.comparingInt(Film::getLikes).reversed()).toList();
+    }
+
+    public void updateFilmLikes(Long id, int like) {
+        jdbc.update(updateLikes, like, id);
     }
 }

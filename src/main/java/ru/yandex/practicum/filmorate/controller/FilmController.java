@@ -25,12 +25,12 @@ public class FilmController {
 
     @GetMapping
     public Collection<Film> findAll() {
-        return filmService.getFilmStorage().findAll();
+        return filmService.findAll();
     }
 
     @GetMapping("/{id}")
     public Film findById(@PathVariable Long id) {
-        return filmService.getFilmStorage().findById(id);
+        return filmService.findById(id);
     }
 
     @GetMapping("/popular")

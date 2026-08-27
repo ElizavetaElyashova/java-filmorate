@@ -6,10 +6,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Event;
-import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.RecommendationService;
+import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.Collection;
 import java.util.List;
@@ -29,17 +29,17 @@ public class UserController {
 
     @GetMapping
     public Collection<User> findAll() {
-        return userService.getUserStorage().findAll();
+        return userService.findAll();
     }
 
     @GetMapping("/{id}")
     public User findById(@PathVariable Long id) {
-        return userService.getUserStorage().findById(id);
+        return userService.findById(id);
     }
 
     @GetMapping("/{id}/friends")
     public List<User> findFriends(@PathVariable Long id) {
-        return userService.getUserStorage().findFriends(id);
+        return userService.findFriends(id);
     }
 
     @GetMapping("/{id}/friends/common/{otherId}")
@@ -59,12 +59,12 @@ public class UserController {
 
     @PostMapping
     public User create(@RequestBody @Valid User user) {
-        return userService.getUserStorage().create(user);
+        return userService.create(user);
     }
 
     @PutMapping
     public User update(@RequestBody @Valid User newUser) throws NotFoundException {
-        return userService.getUserStorage().update(newUser);
+        return userService.update(newUser);
     }
 
     @DeleteMapping("/{userId}")
