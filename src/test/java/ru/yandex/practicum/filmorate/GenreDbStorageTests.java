@@ -10,6 +10,7 @@ import org.springframework.test.context.ContextConfiguration;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
+import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.storage.*;
 import ru.yandex.practicum.filmorate.storage.mappers.*;
 
@@ -26,10 +27,11 @@ import static org.assertj.core.api.Assertions.assertThat;
         FilmDbStorage.class, FilmRowMapper.class,
         MpaDbStorage.class, MpaRowMapper.class,
         UserDbStorage.class, UserRowMapper.class, DirectorRowMapper.class,
-        DirectorDbStorage.class})
+        DirectorDbStorage.class, FilmService.class, FeedDbStorage.class, EventRowMapper.class})
 public class GenreDbStorageTests {
     private final GenreDbStorage genreDbStorage;
     private final FilmDbStorage filmDbStorage;
+    private final FilmService filmService;
     private Film basicFilm;
     private Genre genre1;
     private Genre genre2;
@@ -69,7 +71,7 @@ public class GenreDbStorageTests {
     public void testInsertFilmGenres() {
         Film film = filmDbStorage.create(basicFilm);
         genreDbStorage.insertFilmGenres(film.getId(), Set.of(genre1.getId(), genre2.getId()));
-        film = filmDbStorage.findById(film.getId());
+        film = filmService.findById(film.getId());
         assertThat(film.getGenres()).contains(genre1, genre2);
     }
 
