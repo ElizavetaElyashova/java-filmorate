@@ -5,9 +5,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.FeedDbStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
+import java.util.Collection;
 import java.util.List;
 
 @Service
@@ -17,14 +21,30 @@ public class UserService {
     @Autowired
     @Qualifier("userDbStorage")
     private UserStorage userStorage;
+    private FeedDbStorage feedDbStorage;
 
+    @Autowired
+    public UserService(FeedDbStorage feedDbStorage) {
+        this.feedDbStorage = feedDbStorage;
+    }
+
+    @Transactional
     public void addFriend(Long id, Long friendId) {
         userStorage.addFriend(id, friendId);
+        feedDbStorage.create(Event.builder()
+                .userId(id)
+                .entityId(friendId)
+                .build(), 3, 2);
         log.trace("Пользователь с id = {} добавляет в друзья пользователя с id = {}", id, friendId);
     }
 
+    @Transactional
     public void deleteFriend(Long id, Long friendId) {
         userStorage.deleteFriend(id, friendId);
+        feedDbStorage.create(Event.builder()
+                .userId(id)
+                .entityId(friendId)
+                .build(), 3, 1);
         log.trace("Пользователь с id = {} удаляет из друзей пользователя с id = {}", id, friendId);
     }
 
@@ -35,5 +55,34 @@ public class UserService {
         return userFriends.stream()
                 .filter(u -> otherUserFriends.contains(u))
                 .toList();
+    }
+
+    public Collection<Event> findFeedByUserId(long id) {
+        userStorage.findById(id);
+        return feedDbStorage.findFeedByUserId(id);
+    }
+
+    public void remove(Long id) {
+        userStorage.remove(id);
+    }
+
+    public Collection<User> findAll() {
+        return userStorage.findAll();
+    }
+
+    public User findById(Long id) {
+        return userStorage.findById(id);
+    }
+
+    public List<User> findFriends(Long id) {
+        return userStorage.findFriends(id);
+    }
+
+    public User create(User user) {
+        return userStorage.create(user);
+    }
+
+    public User update(User newUser) {
+        return userStorage.update(newUser);
     }
 }

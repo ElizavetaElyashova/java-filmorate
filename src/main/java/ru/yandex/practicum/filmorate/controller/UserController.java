@@ -5,7 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Event;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.RecommendationService;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.Collection;
@@ -16,25 +19,27 @@ import java.util.List;
 @Slf4j
 public class UserController {
     private final UserService userService;
+    private final RecommendationService recommendationService;
 
     @Autowired
-    public UserController(UserService userService) {
+    public UserController(UserService userService, RecommendationService recommendationService) {
         this.userService = userService;
+        this.recommendationService = recommendationService;
     }
 
     @GetMapping
     public Collection<User> findAll() {
-        return userService.getUserStorage().findAll();
+        return userService.findAll();
     }
 
     @GetMapping("/{id}")
     public User findById(@PathVariable Long id) {
-        return userService.getUserStorage().findById(id);
+        return userService.findById(id);
     }
 
     @GetMapping("/{id}/friends")
     public List<User> findFriends(@PathVariable Long id) {
-        return userService.getUserStorage().findFriends(id);
+        return userService.findFriends(id);
     }
 
     @GetMapping("/{id}/friends/common/{otherId}")
@@ -42,14 +47,29 @@ public class UserController {
         return userService.findCommonFriends(id, otherId);
     }
 
+    @GetMapping("/{id}/feed")
+    public Collection<Event> findFeed(@PathVariable Long id) {
+        return userService.findFeedByUserId(id);
+    }
+
+    @GetMapping("/{id}/recommendations")
+    public List<Film> getRecommendations(@PathVariable Long id) {
+        return recommendationService.getRecommendations(id);
+    }
+
     @PostMapping
     public User create(@RequestBody @Valid User user) {
-        return userService.getUserStorage().create(user);
+        return userService.create(user);
     }
 
     @PutMapping
     public User update(@RequestBody @Valid User newUser) throws NotFoundException {
-        return userService.getUserStorage().update(newUser);
+        return userService.update(newUser);
+    }
+
+    @DeleteMapping("/{userId}")
+    public void remove(@PathVariable("userId") Long id) {
+        userService.remove(id);
     }
 
     @PutMapping("/{id}/friends/{friendId}")

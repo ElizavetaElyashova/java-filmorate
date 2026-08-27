@@ -30,15 +30,15 @@ public class UserDbStorage implements UserStorage {
     private String findAllQuery = "SELECT * FROM users;";
     private String findByIdQuery = "SELECT * FROM users WHERE id = ?;";
     private String insertUserQuery = "INSERT INTO users(email, login, name, birthday) VALUES(?, ?, ?, ?);";
-    private String deleteUserQuery = "DELETE FROM friends WHERE user_id = ? OR friend_id = ?;\n" +
-            "DELETE FROM likes WHERE user_id = ?;\n" +
-            "DELETE FROM users WHERE id = ?;";
+    private String deleteUserQuery = "DELETE FROM users WHERE id = ?;";
     private String updateUserQuery = "UPDATE users SET email = ?, login = ?, name = ?, birthday = ?" +
             "WHERE id = ?";
     private String findFriendsQuery = "SELECT * FROM users WHERE id IN " +
             "(SELECT friend_id FROM friends WHERE user_id = ?);";
     private String addFriendQuery = "INSERT INTO friends(user_id, friend_id) VALUES(?, ?);";
     private String deleteFriendQuery = "DELETE FROM friends WHERE user_id = ? AND friend_id = ?;";
+    private String addUserLiked = "INSERT INTO likes VALUES(?, ?)";
+    private String deleteUserLiked = "DELETE FROM likes WHERE film_id = ? AND user_id = ?";
 
 
     @Override
@@ -115,7 +115,7 @@ public class UserDbStorage implements UserStorage {
     @Override
     public void remove(Long id) {
         findById(id);
-        jdbc.update(deleteUserQuery, id, id, id, id);
+        jdbc.update(deleteUserQuery, id);
         log.info("Пользователь с id = {} был удален.", id);
     }
 
@@ -131,5 +131,13 @@ public class UserDbStorage implements UserStorage {
         findById(id);
         findById(friendId);
         jdbc.update(deleteFriendQuery, id, friendId);
+    }
+
+    public void addUserLiked(Long filmId, Long userId) {
+        jdbc.update(addUserLiked, filmId, userId);
+    }
+
+    public void deleteUserLiked(Long filmId, Long userId) {
+        jdbc.update(deleteUserLiked, filmId, userId);
     }
 }

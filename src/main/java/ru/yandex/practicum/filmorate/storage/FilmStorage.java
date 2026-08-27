@@ -5,11 +5,20 @@ import org.springframework.web.bind.annotation.RequestBody;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.util.Collection;
+import java.util.List;
 
 public interface FilmStorage {
     Collection<Film> findAll();
 
     Film findById(Long id);
+
+    List<Film> findCommonFilms(Long userId, Long friendId);
+
+    List<Film> findPopularByGenre(Long genreId, int count);
+
+    List<Film> findPopularByYear(int year, int count);
+
+    List<Film> findPopularByGenreAndYear(Long genreId, int year, int count);
 
     Film create(@RequestBody @Valid Film film);
 
@@ -17,4 +26,7 @@ public interface FilmStorage {
 
     void remove(Long id);
 
+    List<Film> search(String query, String by);
+
+    void updateFilmLikes(Long id, int like);
 }
